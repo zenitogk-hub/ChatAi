@@ -199,6 +199,7 @@
     <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
       <input id="proxy" class="proxy-url" type="text" placeholder="https://chat-ai-proxy.ТВОЙ-АКК.workers.dev" />
       <button id="save-proxy">сохранить</button>
+      <button id="refresh-models" title="Перезагрузить список моделей">🔄 модели</button>
       <button id="clear" title="Очистить историю">🗑 очистить</button>
       <button id="export" title="Скачать всю историю в .md">⬇️ экспорт</button>
     </div>
@@ -268,17 +269,39 @@ async function loadModels() {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     sel.innerHTML = '';
-    for (const m of data.models) {
+    // Сортируем: сначала доступные, потом неизвестные, потом недоступные
+    const models = [...data.models].sort((a, b) => {
+      const score = m => (m.available === false ? 2 : m.available === null ? 1 : 0);
+      return score(a) - score(b);
+    });
+    let workingCount = 0;
+    let brokenCount = 0;
+    for (const m of models) {
       const opt = document.createElement('option');
       opt.value = m.id;
-      opt.textContent = m.label;
+      // Помечаем состояние
+      let prefix = '';
+      if (m.available === true)  { prefix = '✅ '; workingCount++; }
+      else if (m.available === false) { prefix = '❌ '; brokenCount++; }
+      else                       { prefix = '🟡 '; }
+      opt.textContent = prefix + (m.label || m.id);
+      if (m.available === false) {
+        opt.disabled = true;
+        opt.textContent += '  (недоступна)';
+      }
       sel.appendChild(opt);
     }
-    if (![...sel.options].some(o => o.value === STORE.model)) {
-      STORE.model = sel.options[0]?.value || '';
+    if (![...sel.options].some(o => o.value === STORE.model && !o.disabled)) {
+      // Если выбранная модель недоступна — берём первую рабочую
+      STORE.model = models.find(m => m.available === true)?.id
+                 || models.find(m => m.available !== false)?.id
+                 || '';
     }
     sel.value = STORE.model;
-    setStatus('ok', 'прокси: ' + base);
+    const status = brokenCount
+      ? `прокси: ${base} · доступно ${workingCount}, недоступно ${brokenCount}`
+      : `прокси: ${base} · моделей: ${data.models.length}`;
+    setStatus(brokenCount ? 'err' : 'ok', status);
   } catch (e) {
     sel.innerHTML = '<option value="">ошибка</option>';
     setStatus('err', String(e.message || e));
@@ -462,6 +485,7 @@ document.getElementById('save-proxy').onclick = () => {
   saveStore();
   loadModels();
 };
+document.getElementById('refresh-models').onclick = () => loadModels();
 document.getElementById('clear').onclick = () => {
   if (!confirm('Очистить всю историю?')) return;
   STORE.history = [];
