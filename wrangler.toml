@@ -1,0 +1,10 @@
+name = "chat-ai-proxy"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Секреты командой:
+#   npx wrangler secret put GEMINI_API_KEY
+#   npx wrangler secret put OPENAI_API_KEY
+#   npx wrangler secret put GROQ_API_KEY
+#
+# (не коммить ключи сюда — переменные окружения и так подхватятся)

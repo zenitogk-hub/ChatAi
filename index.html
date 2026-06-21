@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Чат-АИ — личный фронт</title>
+<meta name="description" content="Свой чат с Gemini, GPT и Llama. Бесплатно, без регистрации." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%AC%3C/text%3E%3C/svg%3E">
+
+<!-- Лёгкий markdown-рендер, без зависимостей -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.5.1/github-markdown-light.min.css">
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1f2328;
+    --muted: #6e7781;
+    --line: #d0d7de;
+    --accent: #0969da;
+    --bubble-user: #ddf4ff;
+    --bubble-ai: #f6f8fa;
+    --code-bg: #f6f8fa;
+    --error: #cf222e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --fg: #e6edf3;
+      --muted: #8b949e;
+      --line: #30363d;
+      --accent: #58a6ff;
+      --bubble-user: #1f6feb22;
+      --bubble-ai: #161b22;
+      --code-bg: #161b22;
+      --error: #ff7b72;
+    }
+    .markdown-body { color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Шапка */
+  header {
+    border-bottom: 1px solid var(--line);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: var(--bg);
+    position: sticky; top: 0; z-index: 5;
+  }
+  header h1 {
+    font-size: 16px;
+    margin: 0;
+    font-weight: 600;
+  }
+  header .right { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  select, button, input[type=text] {
+    font: inherit;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--fg);
+  }
+  button { cursor: pointer; }
+  button:hover { background: var(--bubble-ai); }
+  button.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  button.primary:hover { filter: brightness(1.1); background: var(--accent); }
+
+  /* Чат */
+  main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .msg {
+    display: flex;
+    gap: 10px;
+    margin: 12px 0;
+    align-items: flex-start;
+  }
+  .msg .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    font-size: 18px;
+    background: var(--bubble-ai);
+    border: 1px solid var(--line);
+  }
+  .msg.user .avatar { background: var(--bubble-user); }
+  .msg .body {
+    background: var(--bubble-ai);
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .msg.user .body { background: var(--bubble-user); }
+  .msg .meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .msg .content :first-child { margin-top: 0; }
+  .msg .content :last-child { margin-bottom: 0; }
+  .markdown-body pre {
+    background: var(--code-bg);
+    padding: 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+  }
+  .markdown-body code {
+    background: var(--code-bg);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+  .markdown-body pre code { background: transparent; padding: 0; }
+
+  /* Поле ввода */
+  .composer {
+    border-top: 1px solid var(--line);
+    padding: 12px 16px;
+    background: var(--bg);
+    position: sticky; bottom: 0;
+  }
+  .composer-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  textarea {
+    flex: 1;
+    resize: none;
+    min-height: 44px;
+    max-height: 200px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font: inherit;
+    background: var(--bg);
+    color: var(--fg);
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+  .status {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 0 16px 8px;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .status.err { color: var(--error); }
+
+  .welcome {
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--muted);
+  }
+  .welcome h2 { color: var(--fg); }
+  .welcome .examples {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+    margin-top: 16px;
+  }
+  .welcome .examples button { font-size: 13px; }
+
+  .proxy-url { width: 360px; max-width: 60vw; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💬 Чат-АИ</h1>
+  <select id="model" title="Модель">
+    <option value="">загружаю модели…</option>
+  </select>
+  <details>
+    <summary>настройки</summary>
+    <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+      <input id="proxy" class="proxy-url" type="text" placeholder="https://chat-ai-proxy.ТВОЙ-АКК.workers.dev" />
+      <button id="save-proxy">сохранить</button>
+      <button id="clear" title="Очистить историю">🗑 очистить</button>
+      <button id="export" title="Скачать всю историю в .md">⬇️ экспорт</button>
+    </div>
+  </details>
+  <div class="right">
+    <span class="status" id="status" style="padding:0"></span>
+  </div>
+</header>
+
+<main id="chat">
+  <div class="welcome">
+    <h2>Привет! Выбери модель и спроси что-нибудь.</h2>
+    <p>История сохраняется локально в твоём браузере. Можно экспортировать в .md.</p>
+    <div class="examples" id="examples">
+      <button data-q="Объясни квантовую запутанность простыми словами, с примером">🔬 Квантовая запутанность</button>
+      <button data-q="Напиши короткое стихотворение про осенний дождь">🌧 Стих про дождь</button>
+      <button data-q="Составь план изучения Python на 30 дней для новичка">🐍 Python за 30 дней</button>
+      <button data-q="Что такое RAG и зачем он нужен в ИИ-чатах?">🧠 Что такое RAG</button>
+    </div>
+  </div>
+</main>
+
+<div class="status" id="bottom-status"></div>
+
+<div class="composer">
+  <div class="composer-inner">
+    <textarea id="input" rows="1" placeholder="Спроси что угодно… (Enter — отправить, Shift+Enter — новая строка)"></textarea>
+    <button id="send" class="primary">Отправить</button>
+  </div>
+</div>
+
+<script>
+/* ===== Состояние ===== */
+const STORE = {
+  proxy: 'chat-ai-proxy',
+  model: 'gemini-2.0-flash',
+  history: [], // [{role, content, model, ts}]
+};
+const LS_KEY = 'chat-ai.v1';
+
+function loadStore() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) Object.assign(STORE, JSON.parse(raw));
+  } catch {}
+}
+function saveStore() {
+  localStorage.setItem(LS_KEY, JSON.stringify(STORE));
+}
+
+/* ===== Прокси URL ===== */
+function proxyUrl() {
+  let base = STORE.proxy.trim();
+  if (!base) return null;
+  if (!/^https?:/.test(base)) base = 'https://' + base;
+  return base.replace(/\/+$/, '');
+}
+
+/* ===== Загрузка моделей ===== */
+async function loadModels() {
+  const sel = document.getElementById('model');
+  sel.innerHTML = '<option>загружаю…</option>';
+  try {
+    const base = proxyUrl();
+    if (!base) throw new Error('Не указан адрес прокси. Открой "настройки" и вставь URL воркера.');
+    const r = await fetch(base + '/v1/models');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    sel.innerHTML = '';
+    for (const m of data.models) {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = m.label;
+      sel.appendChild(opt);
+    }
+    if (![...sel.options].some(o => o.value === STORE.model)) {
+      STORE.model = sel.options[0]?.value || '';
+    }
+    sel.value = STORE.model;
+    setStatus('ok', 'прокси: ' + base);
+  } catch (e) {
+    sel.innerHTML = '<option value="">ошибка</option>';
+    setStatus('err', String(e.message || e));
+  }
+}
+
+/* ===== Рендер ===== */
+const chat = document.getElementById('chat');
+function renderAll() {
+  // Очищаем всё кроме welcome
+  chat.innerHTML = '';
+  if (!STORE.history.length) {
+    chat.innerHTML = `
+      <div class="welcome">
+        <h2>Привет! Выбери модель и спроси что-нибудь.</h2>
+        <p>История сохраняется локально в твоём браузере. Можно экспортировать в .md.</p>
+        <div class="examples" id="examples">
+          <button data-q="Объясни квантовую запутанность простыми словами, с примером">🔬 Квантовая запутанность</button>
+          <button data-q="Напиши короткое стихотворение про осенний дождь">🌧 Стих про дождь</button>
+          <button data-q="Составь план изучения Python на 30 дней для новичка">🐍 Python за 30 дней</button>
+          <button data-q="Что такое RAG и зачем он нужен в ИИ-чатах?">🧠 Что такое RAG</button>
+        </div>
+      </div>`;
+    bindExamples();
+    return;
+  }
+  for (const m of STORE.history) renderMessage(m, false);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function renderMessage(m, scroll = true) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + (m.role === 'user' ? 'user' : 'assistant');
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = m.role === 'user' ? '🧑' : '🤖';
+  const body = document.createElement('div');
+  body.className = 'body';
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const ts = new Date(m.ts || Date.now()).toLocaleString();
+  meta.textContent = m.role === 'user'
+    ? 'ты · ' + ts
+    : (m.model || 'ИИ') + ' · ' + ts;
+
+  const content = document.createElement('div');
+  content.className = 'content markdown-body';
+  try {
+    content.innerHTML = marked.parse(m.content || '');
+  } catch {
+    content.textContent = m.content || '';
+  }
+
+  body.appendChild(meta);
+  body.appendChild(content);
+  wrap.appendChild(avatar);
+  wrap.appendChild(body);
+  chat.appendChild(wrap);
+  if (scroll) chat.scrollTop = chat.scrollHeight;
+}
+
+function bindExamples() {
+  document.querySelectorAll('#examples button').forEach(btn => {
+    btn.onclick = () => {
+      document.getElementById('input').value = btn.dataset.q;
+      document.getElementById('input').focus();
+    };
+  });
+}
+
+/* ===== Отправка ===== */
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('send');
+
+function autosize() {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 200) + 'px';
+}
+input.addEventListener('input', autosize);
+
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+});
+
+sendBtn.onclick = send;
+
+function setStatus(kind, text) {
+  const el = document.getElementById('status');
+  el.textContent = text;
+  el.className = 'status ' + (kind === 'err' ? 'err' : '');
+  el.style.padding = '0';
+  const b = document.getElementById('bottom-status');
+  if (kind === 'err') {
+    b.textContent = text;
+    b.className = 'status err';
+  } else {
+    b.textContent = '';
+    b.className = 'status';
+  }
+}
+
+async function send() {
+  const text = input.value.trim();
+  if (!text) return;
+  const model = STORE.model;
+  if (!model) { setStatus('err', 'не выбрана модель'); return; }
+  const base = proxyUrl();
+  if (!base) { setStatus('err', 'не указан URL прокси (см. настройки)'); return; }
+
+  // добавляем user-сообщение
+  const userMsg = { role: 'user', content: text, ts: Date.now() };
+  STORE.history.push(userMsg);
+  renderMessage(userMsg);
+  saveStore();
+
+  input.value = ''; autosize();
+  sendBtn.disabled = true;
+  sendBtn.textContent = 'Думаю…';
+  setStatus('ok', '⏳ запрос…');
+
+  // плейсхолдер для ассистента
+  const placeholder = { role: 'assistant', content: '', model, ts: Date.now() };
+  STORE.history.push(placeholder);
+  renderMessage(placeholder);
+  saveStore();
+
+  try {
+    // Собираем messages: последние 20 ходов (чтобы не улететь в лимит токенов)
+    // Убираем пустой placeholder-ответ, который мы только что добавили.
+    const tail = STORE.history.slice(-21, -1).filter(m => m.role !== 'system');
+    const messages = [
+      { role: 'system', content: 'Ты дружелюбный ассистент. Отвечай на языке пользователя. Используй markdown для списков, кода и таблиц.' },
+      ...tail.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content })),
+      { role: 'user', content: text },
+    ];
+
+    const r = await fetch(base + '/v1/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, messages }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.message || data.error || ('HTTP ' + r.status));
+
+    placeholder.content = data.text || '(пустой ответ)';
+    placeholder.ts = Date.now();
+    // обновим DOM последнего сообщения
+    const nodes = chat.querySelectorAll('.msg.assistant');
+    const last = nodes[nodes.length - 1];
+    if (last) {
+      last.querySelector('.content').innerHTML = marked.parse(placeholder.content);
+      last.querySelector('.meta').textContent = (placeholder.model || 'ИИ') + ' · ' + new Date(placeholder.ts).toLocaleString();
+    }
+    saveStore();
+    setStatus('ok', '✅ готово · ' + model);
+    chat.scrollTop = chat.scrollHeight;
+  } catch (e) {
+    placeholder.content = '⚠️ **Ошибка:** ' + String(e.message || e);
+    const nodes = chat.querySelectorAll('.msg.assistant');
+    const last = nodes[nodes.length - 1];
+    if (last) last.querySelector('.content').innerHTML = marked.parse(placeholder.content);
+    saveStore();
+    setStatus('err', '❌ ' + (e.message || e));
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Отправить';
+  }
+}
+
+/* ===== Кнопки ===== */
+document.getElementById('model').onchange = (e) => {
+  STORE.model = e.target.value;
+  saveStore();
+};
+document.getElementById('save-proxy').onclick = () => {
+  STORE.proxy = document.getElementById('proxy').value.trim();
+  saveStore();
+  loadModels();
+};
+document.getElementById('clear').onclick = () => {
+  if (!confirm('Очистить всю историю?')) return;
+  STORE.history = [];
+  saveStore();
+  renderAll();
+};
+document.getElementById('export').onclick = () => {
+  if (!STORE.history.length) { alert('История пуста'); return; }
+  let md = '# История чата\n\n';
+  md += '_Экспорт: ' + new Date().toLocaleString() + '_\n\n---\n\n';
+  for (const m of STORE.history) {
+    const who = m.role === 'user' ? '## 🧑 Ты' : '## 🤖 ' + (m.model || 'ИИ');
+    md += who + ' · ' + new Date(m.ts).toLocaleString() + '\n\n' + (m.content || '') + '\n\n---\n\n';
+  }
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'chat-history-' + Date.now() + '.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+/* ===== Старт ===== */
+loadStore();
+document.getElementById('proxy').value = STORE.proxy || '';
+bindExamples();
+loadModels();
+renderAll();
+autosize();
+</script>
+
+</body>
+</html>
