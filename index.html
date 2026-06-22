@@ -114,6 +114,11 @@
           <div id="capabilities1" class="flex gap-1 mt-1 min-h-[14px]"></div>
         </div>
 
+        <label class="flex items-center gap-1.5 theme-card px-3 py-2 rounded-xl cursor-pointer hover:opacity-90 transition border theme-border text-xs font-bold shrink-0 h-10 select-none" title="Оставить только последние версии моделей">
+          <input type="checkbox" id="hideOldMode" class="form-checkbox text-blue-500 rounded scale-90" checked>
+          <span>Только новые</span>
+        </label>
+
         <label class="flex items-center gap-1.5 theme-card px-3 py-2 rounded-xl cursor-pointer hover:opacity-90 transition border theme-border text-xs font-bold shrink-0 h-10 select-none">
           <input type="checkbox" id="compareMode" class="form-checkbox text-blue-500 rounded scale-90">
           <span>Сравнение</span>
@@ -171,6 +176,7 @@
     const chatSessionsContainer = document.getElementById('chatSessionsContainer');
     
     const compareModeCheck = document.getElementById('compareMode');
+    const hideOldModeCheck = document.getElementById('hideOldMode');
     const model2Wrapper = document.getElementById('model2Wrapper');
     const layoutWrapper = document.getElementById('layoutWrapper');
     const modelSelect1 = document.getElementById('modelSelect1');
@@ -208,6 +214,13 @@
       localStorage.setItem('gemini_hub_theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
     };
     if(localStorage.getItem('gemini_hub_theme') === 'light') document.body.classList.add('light-theme');
+
+    hideOldModeCheck.checked = localStorage.getItem('gemini_hub_hide_old') !== 'false';
+
+    hideOldModeCheck.onchange = () => {
+      localStorage.setItem('gemini_hub_hide_old', hideOldModeCheck.checked);
+      applyFiltering();
+    };
 
     newChatBtn.onclick = () => { createNewSession(); };
 
@@ -283,6 +296,23 @@
       else { renderSidebarSessions(); renderActiveChat(); }
     }
 
+    function getModelFamilyAndVersion(id) {
+      const cleanId = id.toLowerCase()
+        .replace(/-\d{3}$/, '')           
+        .replace(/-preview.*$/, '')       
+        .replace(/-\d{2}-\d{2}$/, '');    
+
+      const match = cleanId.match(/^([a-z]+(?:-[a-z]+)*?)-?(\d+(?:\.\d+)?)(?:[-_](.*))?$/);
+      
+      if (match) {
+        const base = match[1];
+        const version = parseFloat(match[2]);
+        const tail = match[3] || '';
+        return { family: `${base}-${tail}`, version: version };
+      }
+      return null;
+    }
+
     function evaluateCapabilities(modelId) {
       const id = modelId.toLowerCase();
       const isGemini = id.includes('gemini');
@@ -312,15 +342,38 @@
     }
 
     function applyFiltering() {
+      const isHideOld = hideOldModeCheck.checked;
+      let maxVersions = {};
+
+      if (isHideOld) {
+        allModelsData.forEach(m => {
+          const parsed = getModelFamilyAndVersion(m.id);
+          if (parsed) {
+            if (!maxVersions[parsed.family] || parsed.version > maxVersions[parsed.family]) {
+              maxVersions[parsed.family] = parsed.version;
+            }
+          }
+        });
+      }
+
       const filtered = allModelsData.filter(m => {
         const caps = evaluateCapabilities(m.id);
-        if(currentFilter === 'files') return caps.files;
-        if(currentFilter === 'speed') return caps.speed;
-        if(currentFilter === 'power') return caps.power;
+        if(currentFilter === 'files' && !caps.files) return false;
+        if(currentFilter === 'speed' && !caps.speed) return false;
+        if(currentFilter === 'power' && !caps.power) return false;
+
+        if (isHideOld) {
+          const parsed = getModelFamilyAndVersion(m.id);
+          if (parsed && parsed.version < maxVersions[parsed.family]) {
+            return false; 
+          }
+          if (/(-legacy|-older|base$)/i.test(m.id)) {
+            return false;
+          }
+        }
         return true;
       });
 
-      // Чтение ранее выбранных моделей из кэша
       const savedM1 = localStorage.getItem('gemini_hub_model1');
       const savedM2 = localStorage.getItem('gemini_hub_model2');
 
@@ -333,7 +386,6 @@
         });
       });
 
-      // Восстановление значений с проверкой на существование модели в списке
       if (savedM1 && filtered.find(m => m.id === savedM1)) {
         modelSelect1.value = savedM1;
       } else if (modelSelect1.options.length > 0) {
@@ -361,7 +413,6 @@
       });
     });
 
-    // Обработчики выбора с сохранением в localStorage
     modelSelect1.onchange = (e) => {
       localStorage.setItem('gemini_hub_model1', e.target.value);
       drawCapabilitiesBadges(e.target.value, capabilities1);
