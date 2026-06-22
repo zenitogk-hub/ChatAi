@@ -1,579 +1,957 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>💬 Чат-АИ</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #1a1a2e;
-      color: #eee;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    /* Шапка */
-    .header {
-      background: #16213e;
-      padding: 15px 20px;
-      border-bottom: 2px solid #0f3460;
-    }
-    .header h1 { margin: 0 0 10px 0; font-size: 24px; }
-    
-    /* Фильтры */
-    .filters {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-    .filters input, .filters select {
-      padding: 8px 12px;
-      border: 1px solid #0f3460;
-      border-radius: 6px;
-      background: #1a1a2e;
-      color: #eee;
-      font-size: 14px;
-    }
-    .filters input { flex: 1; min-width: 200px; }
-    .filters select { min-width: 150px; }
-    
-    /* Чекбоксы фильтров */
-    .filter-toggles {
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .filter-toggles label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .filter-toggles input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-    }
-    
-    /* Счетчик */
-    .count {
-      font-size: 12px;
-      color: #888;
-      margin-top: 5px;
-    }
-    
-    /* Список моделей */
-    .models-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-    }
-    .model-group {
-      margin-bottom: 20px;
-    }
-    .group-title {
-      font-size: 14px;
-      font-weight: bold;
-      color: #00d9ff;
-      margin: 15px 0 10px 0;
-      padding-bottom: 5px;
-      border-bottom: 1px solid #0f3460;
-    }
-    .model-item {
-      display: flex;
-      align-items: center;
-      padding: 10px 15px;
-      margin: 5px 0;
-      background: #16213e;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: 2px solid transparent;
-    }
-    .model-item:hover {
-      background: #0f3460;
-      transform: translateX(5px);
-    }
-    .model-item.selected {
-      border-color: #00d9ff;
-      background: #1a3a5c;
-    }
-    .model-item.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .model-checkbox {
-      width: 20px;
-      height: 20px;
-      margin-right: 12px;
-      accent-color: #00d9ff;
-    }
-    .model-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .model-label {
-      font-size: 14px;
-      font-weight: 500;
-    }
-    .model-meta {
-      font-size: 12px;
-      color: #888;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    
-    /* Бейджи */
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: bold;
-      text-transform: uppercase;
-    }
-    .badge-fast { background: #ff6b6b; color: white; }
-    .badge-lite { background: #4ecdc4; color: #1a1a2e; }
-    .badge-pro { background: #ffe66d; color: #1a1a2e; }
-    .badge-preview { background: #95e1d3; color: #1a1a2e; }
-    .badge-latest { background: #f38181; color: white; }
-    .badge-70b { background: #aa96da; color: white; }
-    .badge-8b { background: #fcbad3; color: #1a1a2e; }
-    .badge-free { background: #a8e6cf; color: #1a1a2e; }
-    .badge-paid { background: #ff8b94; color: white; }
-    
-    /* Чат */
-    .chat-container {
-      border-top: 2px solid #0f3460;
-      padding: 20px;
-      background: #16213e;
-    }
-    .chat-messages {
-      max-height: 300px;
-      overflow-y: auto;
-      margin-bottom: 15px;
-      padding: 10px;
-      background: #1a1a2e;
-      border-radius: 8px;
-    }
-    .message {
-      margin: 10px 0;
-      padding: 10px 15px;
-      border-radius: 8px;
-    }
-    .message.user {
-      background: #0f3460;
-      margin-left: 20%;
-    }
-    .message.assistant {
-      background: #1a3a5c;
-      margin-right: 20%;
-    }
-    .chat-input {
-      display: flex;
-      gap: 10px;
-    }
-    .chat-input input {
-      flex: 1;
-      padding: 12px 15px;
-      border: 1px solid #0f3460;
-      border-radius: 8px;
-      background: #1a1a2e;
-      color: #eee;
-      font-size: 14px;
-    }
-    .chat-input button {
-      padding: 12px 25px;
-      background: #00d9ff;
-      color: #1a1a2e;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .chat-input button:hover {
-      background: #00b8d4;
-    }
-    .chat-input button:disabled {
-      background: #555;
-      cursor: not-allowed;
-    }
-    
-    /* Подсказки */
-    .hints {
-      font-size: 12px;
-      color: #888;
-      margin-top: 10px;
-      padding: 10px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 6px;
-    }
-    .hints strong { color: #00d9ff; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💬 Чат-АИ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* === ШАПКА === */
+  .header {
+    background: #16213e;
+    padding: 12px 16px;
+    border-bottom: 2px solid #0f3460;
+    flex-shrink: 0;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .header h1 { font-size: 20px; color: #00d9ff; }
+  .header-actions { display: flex; gap: 6px; }
+  .header-actions button {
+    background: #0f3460;
+    border: none;
+    color: #eee;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+  .header-actions button:hover { background: #1a4a8a; }
+
+  /* === ФИЛЬТРЫ === */
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .filters input[type="text"] {
+    flex: 1;
+    min-width: 180px;
+    padding: 7px 10px;
+    border: 1px solid #0f3460;
+    border-radius: 6px;
+    background: #1a1a2e;
+    color: #eee;
+    font-size: 13px;
+  }
+  .filters select {
+    padding: 7px 10px;
+    border: 1px solid #0f3460;
+    border-radius: 6px;
+    background: #1a1a2e;
+    color: #eee;
+    font-size: 13px;
+  }
+  .filter-toggles {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: #aaa;
+  }
+  .filter-toggles label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .filter-toggles input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    accent-color: #00d9ff;
+  }
+  .count {
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  /* === СПИСОК МОДЕЛЕЙ === */
+  .models-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+  }
+  .model-group { margin-bottom: 16px; }
+  .group-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: #00d9ff;
+    margin: 10px 0 8px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #0f3460;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .model-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    margin: 4px 0;
+    background: #16213e;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 2px solid transparent;
+  }
+  .model-item:hover { background: #0f3460; }
+  .model-item.selected { border-color: #00d9ff; background: #1a3a5c; }
+  .model-item.disabled { opacity: 0.4; cursor: not-allowed; }
+  .model-item.disabled:hover { background: #16213e; }
+  .model-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    accent-color: #00d9ff;
+  }
+  .model-content { flex: 1; min-width: 0; }
+  .model-label {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .model-id {
+    font-size: 10px;
+    color: #666;
+    font-family: monospace;
+    margin-top: 2px;
+  }
+  .badges {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 3px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .badge-fast { background: #ff6b6b; color: white; }
+  .badge-lite { background: #4ecdc4; color: #1a1a2e; }
+  .badge-pro { background: #ffe66d; color: #1a1a2e; }
+  .badge-preview { background: #95e1d3; color: #1a1a2e; }
+  .badge-latest { background: #f38181; color: white; }
+  .badge-70b { background: #aa96da; color: white; }
+  .badge-8b { background: #fcbad3; color: #1a1a2e; }
+  .badge-free { background: #a8e6cf; color: #1a1a2e; }
+  .badge-paid { background: #ff8b94; color: white; }
+  .badge-gemini { background: #4285f4; color: white; }
+  .badge-groq { background: #f55036; color: white; }
+  .badge-openai { background: #10a37f; color: white; }
+
+  /* === ЧАТ === */
+  .chat-container {
+    border-top: 2px solid #0f3460;
+    padding: 12px;
+    background: #16213e;
+    flex-shrink: 0;
+    max-height: 40vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #1a1a2e;
+    border-radius: 8px;
+    min-height: 100px;
+    max-height: 200px;
+  }
+  .message {
+    margin: 8px 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .message.user {
+    background: #0f3460;
+    margin-left: 15%;
+  }
+  .message.assistant {
+    background: #1a3a5c;
+    margin-right: 15%;
+  }
+  .message.error {
+    background: #5c1a1a;
+    color: #ff9999;
+  }
+  .chat-input {
+    display: flex;
+    gap: 8px;
+  }
+  .chat-input input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #0f3460;
+    border-radius: 8px;
+    background: #1a1a2e;
+    color: #eee;
+    font-size: 13px;
+  }
+  .chat-input button {
+    padding: 10px 20px;
+    background: #00d9ff;
+    color: #1a1a2e;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .chat-input button:disabled {
+    background: #555;
+    cursor: not-allowed;
+    color: #999;
+  }
+  .current-model {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  /* === МОДАЛКИ === */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: #16213e;
+    border: 2px solid #0f3460;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .modal h2 {
+    color: #00d9ff;
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+  .modal label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+    color: #aaa;
+  }
+  .modal input[type="text"], .modal textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #0f3460;
+    border-radius: 6px;
+    background: #1a1a2e;
+    color: #eee;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .modal textarea { min-height: 100px; font-family: monospace; }
+  .modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 15px;
+  }
+  .modal-buttons button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .btn-primary { background: #00d9ff; color: #1a1a2e; font-weight: bold; }
+  .btn-secondary { background: #0f3460; color: #eee; }
+  .btn-danger { background: #ff4444; color: white; }
+
+  .history-item {
+    padding: 8px 12px;
+    margin: 4px 0;
+    background: #1a1a2e;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+  .history-item:hover { background: #0f3460; }
+  .history-item .del-btn {
+    background: #ff4444;
+    border: none;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+  }
+
+  .legend {
+    font-size: 11px;
+    color: #888;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+  .legend strong { color: #00d9ff; }
+</style>
 </head>
 <body>
-  <div class="header">
+
+<div class="header">
+  <div class="header-top">
     <h1>💬 Чат-АИ</h1>
-    
-    <!-- Поиск -->
-    <div class="filters">
-      <input type="text" id="searchInput" placeholder="🔍 Поиск модели (например: flash, llama, 70b)...">
-      
-      <!-- Фильтр по провайдеру -->
-      <select id="providerFilter">
-        <option value="all">Все провайдеры</option>
-        <option value="gemini">Google Gemini</option>
-        <option value="groq">Groq</option>
-      </select>
-      
-      <!-- Фильтр по типу -->
-      <select id="typeFilter">
-        <option value="all">Все модели</option>
-        <option value="fast">⚡ Быстрые (Flash/Lite)</option>
-        <option value="power">⭐ Мощные (70B+/Pro)</option>
-        <option value="preview">🔬 Preview/Experimental</option>
-      </select>
-    </div>
-    
-    <!-- Чекбоксы -->
-    <div class="filter-toggles">
-      <label>
-        <input type="checkbox" id="freeOnly" checked>
-        🆓 Только бесплатные
-      </label>
-      <label>
-        <input type="checkbox" id="hidePreview">
-        🙈 Скрыть Preview
-      </label>
-      <label>
-        <input type="checkbox" id="sortBySpeed" checked>
-        🏆 Сначала лучшие
-      </label>
-    </div>
-    
-    <div class="count" id="modelCount">Загрузка моделей...</div>
-  </div>
-  
-  <div class="models-container" id="modelsList">
-    <!-- Модели будут здесь -->
-  </div>
-  
-  <div class="chat-container">
-    <div class="chat-messages" id="chatMessages">
-      <div class="message assistant">
-        Привет! Выбери модель и спроси что-нибудь. 
-        <div class="hints">
-          <strong>💡 Подсказки по фильтрам:</strong><br>
-          • <strong>⚡ FAST</strong> — быстрые Flash модели (оптимально)<br>
-          • <strong>LITE</strong> — еще быстрее, но чуть проще<br>
-          • <strong>⭐ 70B</strong> — мощные модели с большим контекстом<br>
-          • <strong>🔬 PREVIEW</strong> — тестовые версии (могут быть нестабильны)<br>
-          • <strong>✨ LATEST</strong> — самые свежие релизы
-        </div>
-      </div>
-    </div>
-    <div class="chat-input">
-      <input type="text" id="messageInput" placeholder="Введите сообщение..." disabled>
-      <button id="sendBtn" disabled>Отправить</button>
+    <div class="header-actions">
+      <button onclick="newChat()" title="Новый чат">🌙＋</button>
+      <button onclick="openSettings()" title="Настройки">⚙️</button>
+      <button onclick="loadModels()" title="Обновить список">🔄</button>
+      <button onclick="openHistory()" title="История">📋</button>
+      <button onclick="exportHistory()" title="Экспорт">⬇️</button>
+      <button onclick="clearHistory()" title="Очистить">🗑</button>
     </div>
   </div>
 
-  <script>
-    let allModels = [];
-    let selectedModel = null;
-    let workerUrl = localStorage.getItem('workerUrl') || '';
-    
-    // Загрузка URL воркера
-    if (!workerUrl) {
-      workerUrl = prompt('Введите URL Cloudflare Worker:', 'https://your-worker.workers.dev');
-      if (workerUrl) localStorage.setItem('workerUrl', workerUrl);
+  <div class="filters">
+    <input type="text" id="searchInput" placeholder="🔍 Поиск модели (flash, llama, 70b)...">
+    <select id="providerFilter">
+      <option value="all">Все провайдеры</option>
+      <option value="gemini">🔮 Google Gemini</option>
+      <option value="groq">⚡ Groq</option>
+      <option value="openai">🟢 OpenAI</option>
+    </select>
+    <select id="typeFilter">
+      <option value="all">Все типы</option>
+      <option value="fast">⚡ Быстрые (Flash/Lite)</option>
+      <option value="power">⭐ Мощные (70B+/Pro)</option>
+      <option value="preview">🔬 Preview</option>
+    </select>
+  </div>
+
+  <div class="filter-toggles">
+    <label><input type="checkbox" id="freeOnly" checked>  Только бесплатные</label>
+    <label><input type="checkbox" id="hidePreview">  Скрыть Preview</label>
+    <label><input type="checkbox" id="sortBySpeed" checked> 🏆 Сначала лучшие</label>
+  </div>
+
+  <div class="count" id="modelCount">Загрузка...</div>
+  <div class="legend">
+    <strong>⚡ FAST</strong> — быстрые Flash | <strong>LITE</strong> — ещё быстрее | <strong>💰 PRO</strong> — платные |
+    <strong>⭐ 70B+</strong> — мощные | <strong>🔬 PREVIEW</strong> — тестовые | <strong>✨ LATEST</strong> — новые
+  </div>
+</div>
+
+<div class="models-container" id="modelsList"></div>
+
+<div class="chat-container">
+  <div class="current-model" id="currentModel">Модель не выбрана</div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="message assistant">Привет! Выбери модель и спроси что-нибудь. История чатов сохраняется локально.</div>
+  </div>
+  <div class="chat-input">
+    <input type="text" id="messageInput" placeholder="Введите сообщение..." disabled>
+    <button id="sendBtn" disabled>Отправить</button>
+  </div>
+</div>
+
+<!-- Модалка настроек -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <h2>⚙️ Настройки</h2>
+    <label>URL Cloudflare Worker:</label>
+    <input type="text" id="workerUrlInput" placeholder="https://your-worker.workers.dev">
+    <div class="modal-buttons">
+      <button class="btn-secondary" onclick="closeModal('settingsModal')">Закрыть</button>
+      <button class="btn-primary" onclick="saveSettings()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка истории -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal">
+    <h2>📋 История чатов</h2>
+    <div id="historyList"></div>
+    <div class="modal-buttons">
+      <button class="btn-secondary" onclick="closeModal('historyModal')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// === СОСТОЯНИЕ ===
+let allModels = [];
+let selectedModel = null;
+let chatHistory = [];
+let currentChatId = null;
+let workerUrl = localStorage.getItem('workerUrl') || '';
+
+// === ИНИЦИАЛИЗАЦИЯ ===
+(function init() {
+  if (!workerUrl) {
+    workerUrl = prompt('Введите URL Cloudflare Worker:', 'https://your-worker.workers.dev') || '';
+    if (workerUrl) localStorage.setItem('workerUrl', workerUrl);
+  }
+  loadHistory();
+  loadModels();
+  setupEventListeners();
+})();
+
+function setupEventListeners() {
+  ['searchInput', 'providerFilter', 'typeFilter', 'freeOnly', 'hidePreview', 'sortBySpeed']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('input', renderModels);
+      el.addEventListener('change', renderModels);
+    });
+
+  document.getElementById('sendBtn').addEventListener('click', sendMessage);
+  document.getElementById('messageInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+}
+
+// === ЗАГРУЗКА МОДЕЛЕЙ ===
+async function loadModels() {
+  const countEl = document.getElementById('modelCount');
+  countEl.textContent = '⏳ Загрузка моделей...';
+
+  if (!workerUrl) {
+    countEl.textContent = '❌ URL воркера не задан. Нажмите ⚙️';
+    return;
+  }
+
+  try {
+    const res = await fetch(workerUrl + '/v1/models');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    allModels = data.models || [];
+    countEl.textContent = `✅ Загружено: ${allModels.length} моделей`;
+    renderModels();
+  } catch (e) {
+    countEl.textContent = '❌ Ошибка: ' + e.message;
+    console.error(e);
+  }
+}
+
+// === КЛАССИФИКАЦИЯ МОДЕЛЕЙ ===
+function classifyModel(m) {
+  const label = (m.label || m.id).toLowerCase();
+  const id = (m.id || '').toLowerCase();
+  const badges = [];
+  let priority = 50;
+  let category = 'other';
+
+  // Провайдер
+  if (m.provider === 'gemini') {
+    badges.push({ class: 'badge-gemini', text: 'GEMINI' });
+    priority += 100;
+    category = 'gemini';
+
+    // Версия
+    const ver = id.match(/gemini-(\d+)\.(\d+)/);
+    if (ver) {
+      const major = parseInt(ver[1]);
+      const minor = parseInt(ver[2]);
+      priority += major * 10 + minor;
+
+      if (major >= 3) priority += 20;
+      else if (major >= 2 && minor >= 5) priority += 15;
     }
-    
-    // Загрузка моделей
-    async function loadModels() {
-      try {
-        const res = await fetch(workerUrl + '/v1/models');
-        const data = await res.json();
-        allModels = data.models || [];
-        renderModels();
-      } catch (e) {
-        document.getElementById('modelCount').textContent = '❌ Ошибка загрузки: ' + e.message;
-      }
+
+    // Тип
+    if (/pro|ultra/i.test(label)) {
+      badges.push({ class: 'badge-pro', text: '💰 PRO' });
+      category = 'paid';
+      priority += 5;
+    } else if (/flash-lite|lite.*flash/i.test(label)) {
+      badges.push({ class: 'badge-lite', text: '⚡ LITE' });
+      category = 'fast';
+      priority += 30;
+    } else if (/flash/i.test(label)) {
+      badges.push({ class: 'badge-fast', text: '⚡ FAST' });
+      category = 'fast';
+      priority += 25;
+    } else {
+      badges.push({ class: 'badge-lite', text: '📦 STD' });
     }
-    
-    // Рендер моделей с фильтрами
-    function renderModels() {
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const provider = document.getElementById('providerFilter').value;
-      const type = document.getElementById('typeFilter').value;
-      const freeOnly = document.getElementById('freeOnly').checked;
-      const hidePreview = document.getElementById('hidePreview').checked;
-      const sortBySpeed = document.getElementById('sortBySpeed').checked;
-      
-      // Фильтрация
-      let filtered = allModels.filter(m => {
-        // Поиск
-        if (search && !m.label.toLowerCase().includes(search) && !m.id.toLowerCase().includes(search)) {
-          return false;
-        }
-        
-        // Провайдер
-        if (provider !== 'all' && m.provider !== provider) {
-          return false;
-        }
-        
-        // Только бесплатные
-        if (freeOnly && m.paidOnly) {
-          return false;
-        }
-        
-        // Скрыть preview
-        if (hidePreview && m.label.toLowerCase().includes('preview')) {
-          return false;
-        }
-        
-        // Тип
-        if (type === 'fast' && !/fast|lite|flash/i.test(m.label)) {
-          return false;
-        }
-        if (type === 'power' && !/70b|pro|ultra|maverick/i.test(m.label)) {
-          return false;
-        }
-        if (type === 'preview' && !/preview|experimental/i.test(m.label)) {
-          return false;
-        }
-        
-        return true;
+
+    if (/preview|experimental/i.test(label)) {
+      badges.push({ class: 'badge-preview', text: '🔬 PREVIEW' });
+      priority -= 10;
+    }
+    if (/latest/i.test(label)) {
+      badges.push({ class: 'badge-latest', text: '✨ LATEST' });
+      priority += 5;
+    }
+
+  } else if (m.provider === 'groq') {
+    badges.push({ class: 'badge-groq', text: 'GROQ' });
+    priority += 90;
+
+    if (/llama-4|maverick/i.test(label)) {
+      badges.push({ class: 'badge-70b', text: ' LLAMA 4' });
+      priority += 40;
+      category = 'power';
+    } else if (/llama-3\.3/i.test(label)) {
+      badges.push({ class: 'badge-70b', text: '🦙 LLAMA 3.3' });
+      priority += 35;
+      category = 'power';
+    } else if (/llama-3\.1/i.test(label)) {
+      badges.push({ class: 'badge-70b', text: '🦙 LLAMA 3.1' });
+      priority += 30;
+      category = 'stable';
+    } else if (/llama/i.test(label)) {
+      badges.push({ class: 'badge-lite', text: '🦙 Llama' });
+      priority += 20;
+    }
+
+    if (/70b|120b/i.test(label)) {
+      badges.push({ class: 'badge-70b', text: '⭐ 70B+' });
+      priority += 15;
+    } else if (/32b/i.test(label)) {
+      badges.push({ class: 'badge-70b', text: '⭐ 32B' });
+      priority += 10;
+    } else if (/8b|20b/i.test(label)) {
+      badges.push({ class: 'badge-8b', text: '⚡ SMALL' });
+    }
+
+    if (/deepseek|r1/i.test(label)) {
+      badges.push({ class: 'badge-pro', text: '🎯 REASONING' });
+      priority += 20;
+    }
+    if (/qwen/i.test(label)) {
+      badges.push({ class: 'badge-pro', text: '💎 QWEN' });
+      priority += 15;
+    }
+
+  } else if (m.provider === 'openai') {
+    badges.push({ class: 'badge-openai', text: 'OPENAI' });
+    priority += 95;
+    if (/4\.1|4o/i.test(label)) priority += 30;
+    else if (/4/i.test(label)) priority += 25;
+    else if (/3\.5/i.test(label)) priority += 10;
+  }
+
+  if (m.paidOnly) {
+    badges.push({ class: 'badge-paid', text: '💰 PAID' });
+    priority -= 50;
+  } else {
+    badges.push({ class: 'badge-free', text: ' FREE' });
+  }
+
+  return { badges, priority, category };
+}
+
+// === РЕНДЕР МОДЕЛЕЙ ===
+function renderModels() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const provider = document.getElementById('providerFilter').value;
+  const type = document.getElementById('typeFilter').value;
+  const freeOnly = document.getElementById('freeOnly').checked;
+  const hidePreview = document.getElementById('hidePreview').checked;
+  const sortBySpeed = document.getElementById('sortBySpeed').checked;
+
+  // Обогащаем модели классификацией
+  const enriched = allModels.map(m => {
+    const cls = classifyModel(m);
+    return { ...m, ...cls };
+  });
+
+  // Фильтрация
+  let filtered = enriched.filter(m => {
+    if (search && !m.label.toLowerCase().includes(search) && !m.id.toLowerCase().includes(search)) return false;
+    if (provider !== 'all' && m.provider !== provider) return false;
+    if (freeOnly && m.paidOnly) return false;
+    if (hidePreview && /preview|experimental/i.test(m.label)) return false;
+
+    if (type === 'fast' && m.category !== 'fast') return false;
+    if (type === 'power' && m.category !== 'power' && m.category !== 'paid') return false;
+    if (type === 'preview' && !/preview|experimental/i.test(m.label)) return false;
+
+    return true;
+  });
+
+  // Сортировка
+  if (sortBySpeed) {
+    filtered.sort((a, b) => b.priority - a.priority);
+  } else {
+    filtered.sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  // Группировка
+  const groups = {};
+  const groupOrder = ['gemini', 'groq', 'openai', 'other'];
+  const groupNames = {
+    'gemini': '🔮 Google Gemini',
+    'groq': '⚡ Groq',
+    'openai': '🟢 OpenAI',
+    'other': '🤖 Другие',
+    'fast': '⚡ Быстрые',
+    'power': '⭐ Мощные',
+    'paid': '💰 Платные',
+    'stable': '📦 Стабильные',
+  };
+
+  filtered.forEach(m => {
+    const g = groupNames[m.category] || '🤖 Другие';
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(m);
+  });
+
+  // Рендер
+  const container = document.getElementById('modelsList');
+  container.innerHTML = '';
+
+  groupOrder.forEach(gKey => {
+    const gName = groupNames[gKey];
+    if (!groups[gName]) return;
+    const models = groups[gName];
+
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'model-group';
+
+    const title = document.createElement('div');
+    title.className = 'group-title';
+    title.textContent = `${gName} (${models.length})`;
+    groupDiv.appendChild(title);
+
+    models.forEach(m => {
+      const item = document.createElement('div');
+      item.className = 'model-item' + (m.paidOnly ? ' disabled' : '') +
+                       (selectedModel === m.id ? ' selected' : '');
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'model-checkbox';
+      checkbox.checked = selectedModel === m.id;
+      checkbox.disabled = m.paidOnly;
+      checkbox.onclick = (e) => { e.stopPropagation(); selectModel(m.id); };
+
+      const content = document.createElement('div');
+      content.className = 'model-content';
+
+      const label = document.createElement('div');
+      label.className = 'model-label';
+      label.textContent = m.label || m.id;
+
+      const idDiv = document.createElement('div');
+      idDiv.className = 'model-id';
+      idDiv.textContent = m.id;
+
+      const badgesDiv = document.createElement('div');
+      badgesDiv.className = 'badges';
+      m.badges.forEach(b => {
+        const span = document.createElement('span');
+        span.className = 'badge ' + b.class;
+        span.textContent = b.text;
+        badgesDiv.appendChild(span);
       });
-      
-      // Сортировка
-      if (sortBySpeed) {
-        filtered.sort((a, b) => {
-          const priorityA = getModelPriority(a);
-          const priorityB = getModelPriority(b);
-          return priorityB - priorityA;
-        });
-      }
-      
-      // Группировка по провайдерам
-      const groups = {};
-      filtered.forEach(m => {
-        const group = m.provider === 'gemini' ? '🔮 Google Gemini' : 
-                     m.provider === 'groq' ? '⚡ Groq (быстрые)' : '🤖 Другие';
-        if (!groups[group]) groups[group] = [];
-        groups[group].push(m);
+
+      content.appendChild(label);
+      content.appendChild(idDiv);
+      content.appendChild(badgesDiv);
+
+      item.appendChild(checkbox);
+      item.appendChild(content);
+      item.onclick = () => selectModel(m.id);
+
+      groupDiv.appendChild(item);
+    });
+
+    container.appendChild(groupDiv);
+  });
+
+  document.getElementById('modelCount').textContent =
+    `Показано: ${filtered.length} из ${allModels.length}`;
+}
+
+// === ВЫБОР МОДЕЛИ ===
+function selectModel(id) {
+  const model = allModels.find(m => m.id === id);
+  if (!model || model.paidOnly) return;
+
+  selectedModel = id;
+  document.getElementById('currentModel').textContent = '✅ Выбрана: ' + (model.label || id);
+  document.getElementById('messageInput').disabled = false;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('messageInput').focus();
+  renderModels();
+
+  // Создаём новый чат если нужно
+  if (!currentChatId) newChat();
+}
+
+// === ОТПРАВКА СООБЩЕНИЯ ===
+async function sendMessage() {
+  const input = document.getElementById('messageInput');
+  const message = input.value.trim();
+  if (!message || !selectedModel) return;
+
+  const messagesDiv = document.getElementById('chatMessages');
+
+  // Сообщение пользователя
+  const userMsg = document.createElement('div');
+  userMsg.className = 'message user';
+  userMsg.textContent = message;
+  messagesDiv.appendChild(userMsg);
+
+  input.value = '';
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+  // Блокируем ввод
+  input.disabled = true;
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('sendBtn').textContent = '⏳';
+
+  // Добавляем в историю
+  if (!currentChatId) newChat();
+  const chat = chatHistory.find(c => c.id === currentChatId);
+  if (chat) {
+    chat.messages.push({ role: 'user', content: message, time: Date.now() });
+    chat.model = selectedModel;
+    saveHistory();
+  }
+
+  try {
+    const res = await fetch(workerUrl + '/v1/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: selectedModel,
+        messages: [{ role: 'user', content: message }]
+      })
+    });
+
+    const data = await res.json();
+
+    const assistantMsg = document.createElement('div');
+    assistantMsg.className = 'message ' + (data.error ? 'error' : 'assistant');
+    assistantMsg.textContent = data.text || data.message || data.error || 'Пустой ответ';
+    messagesDiv.appendChild(assistantMsg);
+
+    if (chat) {
+      chat.messages.push({
+        role: 'assistant',
+        content: data.text || data.message || data.error || 'Пустой ответ',
+        time: Date.now()
       });
-      
-      // Рендер
-      const container = document.getElementById('modelsList');
-      container.innerHTML = '';
-      
-      Object.entries(groups).forEach(([groupName, models]) => {
-        const groupDiv = document.createElement('div');
-        groupDiv.className = 'model-group';
-        
-        const title = document.createElement('div');
-        title.className = 'group-title';
-        title.textContent = `${groupName} (${models.length})`;
-        groupDiv.appendChild(title);
-        
-        models.forEach(m => {
-          const item = document.createElement('div');
-          item.className = 'model-item' + (m.paidOnly ? ' disabled' : '') + 
-                          (selectedModel === m.id ? ' selected' : '');
-          item.dataset.id = m.id;
-          
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.className = 'model-checkbox';
-          checkbox.checked = selectedModel === m.id;
-          checkbox.disabled = m.paidOnly;
-          checkbox.onchange = () => selectModel(m.id);
-          
-          const content = document.createElement('div');
-          content.className = 'model-content';
-          
-          const label = document.createElement('div');
-          label.className = 'model-label';
-          label.textContent = m.label || m.id;
-          
-          const meta = document.createElement('div');
-          meta.className = 'model-meta';
-          
-          // Добавляем бейджи
-          const badges = getModelBadges(m);
-          badges.forEach(badge => {
-            const span = document.createElement('span');
-            span.className = 'badge ' + badge.class;
-            span.textContent = badge.text;
-            meta.appendChild(span);
-          });
-          
-          if (m.paidOnly) {
-            const paid = document.createElement('span');
-            paid.style.color = '#ff8b94';
-            paid.textContent = '💰 Только платно';
-            meta.appendChild(paid);
-          }
-          
-          content.appendChild(label);
-          content.appendChild(meta);
-          
-          item.appendChild(checkbox);
-          item.appendChild(content);
-          item.onclick = (e) => {
-            if (e.target !== checkbox) selectModel(m.id);
-          };
-          
-          groupDiv.appendChild(item);
-        });
-        
-        container.appendChild(groupDiv);
-      });
-      
-      document.getElementById('modelCount').textContent = 
-        `Показано: ${filtered.length} из ${allModels.length}`;
+      saveHistory();
     }
-    
-    // Приоритет модели для сортировки
-    function getModelPriority(m) {
-      let score = 0;
-      const label = m.label.toLowerCase();
-      
-      // Провайдеры
-      if (m.provider === 'gemini') score += 100;
-      if (m.provider === 'groq') score += 90;
-      
-      // Типы моделей
-      if (/flash.*lite|lite.*flash/i.test(label)) score += 80;
-      else if (/flash/i.test(label)) score += 85;
-      else if (/70b|pro|ultra|maverick/i.test(label)) score += 75;
-      else if (/32b|3.3/i.test(label)) score += 70;
-      else if (/8b|instant/i.test(label)) score += 65;
-      
-      // Версии
-      if (/latest/i.test(label)) score += 50;
-      if (/preview|experimental/i.test(label)) score -= 20;
-      
-      // Версионность Gemini
-      const geminiVer = label.match(/gemini-(\d+)\.(\d+)/);
-      if (geminiVer) {
-        score += parseInt(geminiVer[1]) * 10 + parseInt(geminiVer[2]);
-      }
-      
-      return score;
-    }
-    
-    // Бейджи для модели
-    function getModelBadges(m) {
-      const badges = [];
-      const label = m.label.toLowerCase();
-      
-      if (/fast|flash/i.test(label) && !/lite/i.test(label)) {
-        badges.push({ class: 'badge-fast', text: '⚡ FAST' });
-      }
-      if (/lite/i.test(label)) {
-        badges.push({ class: 'badge-lite', text: 'LITE' });
-      }
-      if (/pro|ultra/i.test(label)) {
-        badges.push({ class: 'badge-pro', text: '💰 PRO' });
-      }
-      if (/preview|experimental/i.test(label)) {
-        badges.push({ class: 'badge-preview', text: '🔬 PREVIEW' });
-      }
-      if (/latest/i.test(label)) {
-        badges.push({ class: 'badge-latest', text: '✨ LATEST' });
-      }
-      if (/70b|120b|maverick/i.test(label)) {
-        badges.push({ class: 'badge-70b', text: '⭐ 70B+' });
-      }
-      if (/8b|20b/i.test(label)) {
-        badges.push({ class: 'badge-8b', text: '⚡ 8B' });
-      }
-      if (!m.paidOnly) {
-        badges.push({ class: 'badge-free', text: '🆓' });
-      }
-      
-      return badges;
-    }
-    
-    // Выбор модели
-    function selectModel(id) {
-      selectedModel = id;
-      renderModels();
-      document.getElementById('messageInput').disabled = false;
-      document.getElementById('sendBtn').disabled = false;
-      document.getElementById('messageInput').focus();
-    }
-    
-    // Отправка сообщения
-    document.getElementById('sendBtn').onclick = async () => {
-      const input = document.getElementById('messageInput');
-      const message = input.value.trim();
-      if (!message || !selectedModel) return;
-      
-      const messagesDiv = document.getElementById('chatMessages');
-      
-      // Добавляем сообщение пользователя
-      const userMsg = document.createElement('div');
-      userMsg.className = 'message user';
-      userMsg.textContent = message;
-      messagesDiv.appendChild(userMsg);
-      
-      input.value = '';
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      
-      // Отправляем запрос
-      try {
-        const res = await fetch(workerUrl + '/v1/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: selectedModel,
-            messages: [{ role: 'user', content: message }]
-          })
-        });
-        
-        const data = await res.json();
-        
-        const assistantMsg = document.createElement('div');
-        assistantMsg.className = 'message assistant';
-        assistantMsg.textContent = data.text || data.error || 'Ошибка';
-        messagesDiv.appendChild(assistantMsg);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      } catch (e) {
-        const errorMsg = document.createElement('div');
-        errorMsg.className = 'message assistant';
-        errorMsg.style.background = '#ff6b6b';
-        errorMsg.textContent = '❌ Ошибка: ' + e.message;
-        messagesDiv.appendChild(errorMsg);
-      }
-    };
-    
-    // Enter для отправки
-    document.getElementById('messageInput').onkeypress = (e) => {
-      if (e.key === 'Enter') document.getElementById('sendBtn').onclick();
-    };
-    
-    // Фильтры
-    ['searchInput', 'providerFilter', 'typeFilter', 'freeOnly', 'hidePreview', 'sortBySpeed']
-      .forEach(id => {
-        document.getElementById(id).onchange = renderModels;
-        document.getElementById(id).oninput = renderModels;
-      });
-    
-    // Загрузка при старте
+  } catch (e) {
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'message error';
+    errorMsg.textContent = '❌ Ошибка сети: ' + e.message;
+    messagesDiv.appendChild(errorMsg);
+  }
+
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  input.disabled = false;
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('sendBtn').textContent = 'Отправить';
+  input.focus();
+}
+
+// === НОВЫЙ ЧАТ ===
+function newChat() {
+  currentChatId = 'chat_' + Date.now();
+  const chat = {
+    id: currentChatId,
+    title: 'Новый чат',
+    model: selectedModel || 'не выбрана',
+    messages: [],
+    created: Date.now()
+  };
+  chatHistory.unshift(chat);
+  saveHistory();
+
+  document.getElementById('chatMessages').innerHTML =
+    '<div class="message assistant">Новый чат начат. Выбери модель и спроси что-нибудь.</div>';
+
+  if (selectedModel) {
+    document.getElementById('currentModel').textContent = '✅ Выбрана: ' + selectedModel;
+  }
+}
+
+// === ИСТОРИЯ ===
+function loadHistory() {
+  try {
+    const saved = localStorage.getItem('chatHistory');
+    if (saved) chatHistory = JSON.parse(saved);
+  } catch (e) { chatHistory = []; }
+}
+
+function saveHistory() {
+  try {
+    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+  } catch (e) { console.error('Не удалось сохранить историю', e); }
+}
+
+function openHistory() {
+  const list = document.getElementById('historyList');
+  list.innerHTML = '';
+
+  if (chatHistory.length === 0) {
+    list.innerHTML = '<div style="color:#888;padding:20px;text-align:center;">История пуста</div>';
+  } else {
+    chatHistory.forEach(chat => {
+      const item = document.createElement('div');
+      item.className = 'history-item';
+
+      const info = document.createElement('div');
+      info.innerHTML = `<strong>${escapeHtml(chat.title)}</strong><br>
+        <small style="color:#888">${chat.model} • ${chat.messages.length} сообщ. • ${new Date(chat.created).toLocaleString()}</small>`;
+      info.onclick = () => loadChat(chat.id);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'del-btn';
+      delBtn.textContent = '✕';
+      delBtn.onclick = (e) => { e.stopPropagation(); deleteChat(chat.id); };
+
+      item.appendChild(info);
+      item.appendChild(delBtn);
+      list.appendChild(item);
+    });
+  }
+
+  document.getElementById('historyModal').classList.add('active');
+}
+
+function loadChat(id) {
+  const chat = chatHistory.find(c => c.id === id);
+  if (!chat) return;
+
+  currentChatId = id;
+  selectedModel = chat.model;
+
+  const messagesDiv = document.getElementById('chatMessages');
+  messagesDiv.innerHTML = '';
+
+  chat.messages.forEach(msg => {
+    const div = document.createElement('div');
+    div.className = 'message ' + msg.role;
+    div.textContent = msg.content;
+    messagesDiv.appendChild(div);
+  });
+
+  document.getElementById('currentModel').textContent = '✅ Выбрана: ' + (chat.model || 'не выбрана');
+  document.getElementById('messageInput').disabled = false;
+  document.getElementById('sendBtn').disabled = false;
+
+  closeModal('historyModal');
+  renderModels();
+}
+
+function deleteChat(id) {
+  chatHistory = chatHistory.filter(c => c.id !== id);
+  saveHistory();
+  if (currentChatId === id) {
+    currentChatId = null;
+    document.getElementById('chatMessages').innerHTML =
+      '<div class="message assistant">Чат удалён. Создайте новый.</div>';
+  }
+  openHistory();
+}
+
+function clearHistory() {
+  if (confirm('Удалить всю историю чатов?')) {
+    chatHistory = [];
+    saveHistory();
+    currentChatId = null;
+    document.getElementById('chatMessages').innerHTML =
+      '<div class="message assistant">История очищена.</div>';
+  }
+}
+
+function exportHistory() {
+  const data = JSON.stringify(chatHistory, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'chat-history-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// === НАСТРОЙКИ ===
+function openSettings() {
+  document.getElementById('workerUrlInput').value = workerUrl;
+  document.getElementById('settingsModal').classList.add('active');
+}
+
+function saveSettings() {
+  const newUrl = document.getElementById('workerUrlInput').value.trim();
+  if (newUrl) {
+    workerUrl = newUrl;
+    localStorage.setItem('workerUrl', workerUrl);
+    closeModal('settingsModal');
     loadModels();
-  </script>
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+// === УТИЛИТЫ ===
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Закрытие модалок по клику на оверлей
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+</script>
 </body>
 </html>
