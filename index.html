@@ -52,7 +52,6 @@
     
     .badge { font-size: 0.65rem; font-weight: 600; padding: 0.1rem 0.4rem; border-radius: 0.25rem; }
     
-    /* Сдвиг сайдбара на десктопе при скрытии */
     @media (min-width: 768px) {
       .sidebar-desktop-hidden {
         margin-left: -16rem !important;
@@ -73,24 +72,31 @@
 
     <div class="px-4 mb-2">
       <span class="text-xs theme-text-sec font-bold block mb-1.5 uppercase tracking-wider px-1">Фильтр моделей:</span>
-      <div class="grid grid-cols-2 gap-1 text-center">
-        <button class="filter-chip bg-blue-600 text-white text-xs py-1.5 rounded-lg font-medium transition" data-filter="all">Все</button>
-        <button class="filter-chip theme-card text-xs py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-700 transition" data-filter="files">📁 Файлы</button>
-        <button class="filter-chip theme-card text-xs py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-700 transition" data-filter="speed">⚡ Быстрые</button>
-        <button class="filter-chip theme-card text-xs py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-700 transition" data-filter="power">🧠 Мощные</button>
+      <div class="grid grid-cols-2 gap-1 text-center text-xs">
+        <button class="filter-chip bg-blue-600 text-white py-1.5 rounded-lg font-medium transition" data-filter="all">Все</button>
+        <button class="filter-chip theme-card py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-500/20 transition" data-filter="files">📁 Файлы</button>
+        <button class="filter-chip theme-card py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-500/20 transition" data-filter="speed">⚡ Быстрые</button>
+        <button class="filter-chip theme-card py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-500/20 transition" data-filter="power">🧠 Мощные</button>
       </div>
+    </div>
+
+    <div class="px-4 mb-4 select-none">
+      <label class="w-full flex items-center justify-between px-3 py-2 theme-card rounded-xl text-xs font-semibold border theme-border cursor-pointer hover:bg-gray-500/10 transition" title="Автоматически скрывать устаревшие версии линеек">
+        <span class="theme-text-sec">✨ Только новые версии</span>
+        <input type="checkbox" id="hideOldMode" class="form-checkbox text-blue-500 rounded scale-105 cursor-pointer" checked>
+      </label>
     </div>
 
     <div class="flex-1 overflow-y-auto no-scrollbar px-2 space-y-1" id="chatSessionsContainer"></div>
 
     <div class="p-4 border-t theme-border space-y-2 text-xs font-medium flex-none">
-      <button id="themeToggleBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-700 hover:text-white transition">
+      <button id="themeToggleBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-500/20 transition">
         🌗 Сменить тему
       </button>
-      <button id="exportChatBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-700 hover:text-white transition">
+      <button id="exportChatBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-500/20 transition">
         💾 Экспорт диалога (.md)
       </button>
-      <button id="clearAllBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-400 hover:bg-red-900/30 transition">
+      <button id="clearAllBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-400 hover:bg-red-900/20 transition">
         🗑️ Очистить историю
       </button>
     </div>
@@ -102,7 +108,7 @@
     
     <header class="theme-card border-b theme-border p-3 flex items-center justify-between gap-4 shadow-sm z-10 flex-none">
       <div class="flex items-center gap-3 shrink-0">
-        <button id="burgerBtn" class="p-2 rounded-lg hover:bg-gray-700 transition focus:outline-none text-xl" title="Переключить боковое меню">
+        <button id="burgerBtn" class="p-2 rounded-lg hover:bg-gray-500/20 transition focus:outline-none text-xl" title="Переключить боковое меню">
           ☰
         </button>
         <h1 class="text-md font-bold tracking-tight hidden sm:block">Workspace <span class="text-blue-500 font-mono text-xs">v4.0</span></h1>
@@ -113,11 +119,6 @@
           <select id="modelSelect1" class="theme-card text-xs rounded-xl p-2.5 border focus:outline-none focus:border-blue-500 font-mono w-full h-10 cursor-pointer"></select>
           <div id="capabilities1" class="flex gap-1 mt-1 min-h-[14px]"></div>
         </div>
-
-        <label class="flex items-center gap-1.5 theme-card px-3 py-2 rounded-xl cursor-pointer hover:opacity-90 transition border theme-border text-xs font-bold shrink-0 h-10 select-none" title="Оставить только последние версии моделей">
-          <input type="checkbox" id="hideOldMode" class="form-checkbox text-blue-500 rounded scale-90" checked>
-          <span>Только новые</span>
-        </label>
 
         <label class="flex items-center gap-1.5 theme-card px-3 py-2 rounded-xl cursor-pointer hover:opacity-90 transition border theme-border text-xs font-bold shrink-0 h-10 select-none">
           <input type="checkbox" id="compareMode" class="form-checkbox text-blue-500 rounded scale-90">
@@ -194,7 +195,6 @@
     const exportChatBtn = document.getElementById('exportChatBtn');
     const clearAllBtn = document.getElementById('clearAllBtn');
 
-    // Логика управления сайдбаром для ПК и Мобильных
     burgerBtn.onclick = () => { 
       if (window.innerWidth < 768) {
         sidebar.classList.toggle('-translate-x-full');
@@ -297,20 +297,29 @@
     }
 
     function getModelFamilyAndVersion(id) {
-      const cleanId = id.toLowerCase()
-        .replace(/-\d{3}$/, '')           
-        .replace(/-preview.*$/, '')       
-        .replace(/-\d{2}-\d{2}$/, '');    
-
-      const match = cleanId.match(/^([a-z]+(?:-[a-z]+)*?)-?(\d+(?:\.\d+)?)(?:[-_](.*))?$/);
+      let clean = id.toLowerCase();
       
-      if (match) {
-        const base = match[1];
-        const version = parseFloat(match[2]);
-        const tail = match[3] || '';
-        return { family: `${base}-${tail}`, version: version };
+      // Разделяем слипшиеся буквы и цифры (например, llama3 -> llama-3)
+      clean = clean.replace(/([a-z])(\d)/g, '$1-$2').replace(/(\d)([a-z])/g, '$1-$2');
+      
+      // Находим первую версию в строке (десятичное число или целое)
+      const versionMatch = clean.match(/(\d+\.\d+|\d+)/);
+      let version = 0;
+      if (versionMatch) {
+        version = parseFloat(versionMatch[1]);
+        // Исключаем саму цифру версии из строки для формирования базы семейства
+        clean = clean.replace(versionMatch[1], '');
       }
-      return null;
+      
+      // Вырезаем технические маркеры, суффиксы дат, портов и контекста
+      clean = clean.replace(/-(preview|exp|experimental|instant|versatile|text|latest|legacy|older|vision|distill)/g, '');
+      clean = clean.replace(/-\d{2}-\d{2}/g, ''); 
+      clean = clean.replace(/-\d{4,5}/g, '');     
+      
+      // Избавляемся от паразитных дефисов после вырезки
+      clean = clean.replace(/-+/g, '-').replace(/^-|-$/g, '');
+      
+      return { family: clean, version: version };
     }
 
     function evaluateCapabilities(modelId) {
@@ -406,8 +415,8 @@
 
     document.querySelectorAll('.filter-chip').forEach(chip => {
       chip.addEventListener('click', function() {
-        document.querySelectorAll('.filter-chip').forEach(c => c.className = 'filter-chip theme-card text-xs py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-700 transition');
-        this.className = 'filter-chip bg-blue-600 text-white text-xs py-1.5 rounded-lg font-medium';
+        document.querySelectorAll('.filter-chip').forEach(c => c.className = 'filter-chip theme-card py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-500/20 transition');
+        this.className = 'filter-chip bg-blue-600 text-white py-1.5 rounded-lg font-medium';
         currentFilter = this.getAttribute('data-filter');
         applyFiltering();
       });
