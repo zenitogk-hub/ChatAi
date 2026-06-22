@@ -29,7 +29,6 @@
       --user-msg-bg: #e3e3e3;
     }
 
-    /* Используем dvh для корректной работы с мобильными браузерами */
     body { 
       height: 100vh;
       height: 100dvh;
@@ -53,15 +52,19 @@
     
     .badge { font-size: 0.65rem; font-weight: 600; padding: 0.1rem 0.4rem; border-radius: 0.25rem; }
     
-    @media (max-width: 768px) {
-      .sidebar-mobile { transform: translateX(-100%); transition: transform 0.2s ease-in-out; }
-      .sidebar-mobile.active { transform: translateX(0); }
+    /* Сдвиг сайдбара на десктопе при скрытии */
+    @media (min-width: 768px) {
+      .sidebar-desktop-hidden {
+        margin-left: -16rem !important;
+        opacity: 0;
+        pointer-events: none;
+      }
     }
   </style>
 </head>
 <body class="font-sans antialiased flex overflow-hidden">
 
-  <aside id="sidebar" class="sidebar-mobile fixed inset-y-0 left-0 w-68 theme-sidebar border-r z-40 flex flex-col md:relative md:transform-none shadow-xl">
+  <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 theme-sidebar border-r z-40 flex flex-col transition-all duration-300 transform -translate-x-full md:translate-x-0 md:relative md:shrink-0 shadow-xl">
     <div class="p-4">
       <button id="newChatBtn" class="w-full flex items-center justify-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-sm font-medium transition shadow-sm">
         ➕ Новый чат
@@ -78,8 +81,7 @@
       </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto no-scrollbar px-2 space-y-1" id="chatSessionsContainer">
-      </div>
+    <div class="flex-1 overflow-y-auto no-scrollbar px-2 space-y-1" id="chatSessionsContainer"></div>
 
     <div class="p-4 border-t theme-border space-y-2 text-xs font-medium flex-none">
       <button id="themeToggleBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-700 hover:text-white transition">
@@ -94,47 +96,45 @@
     </div>
   </aside>
 
-  <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
 
   <main class="flex-1 flex flex-col h-full overflow-hidden relative">
     
     <header class="theme-card border-b theme-border p-3 flex items-center justify-between gap-4 shadow-sm z-10 flex-none">
-      <div class="flex items-center gap-3">
-        <button id="burgerBtn" class="md:hidden p-2 rounded-lg hover:bg-gray-700 transition focus:outline-none">
+      <div class="flex items-center gap-3 shrink-0">
+        <button id="burgerBtn" class="p-2 rounded-lg hover:bg-gray-700 transition focus:outline-none text-xl" title="Переключить боковое меню">
           ☰
         </button>
         <h1 class="text-md font-bold tracking-tight hidden sm:block">Workspace <span class="text-blue-500 font-mono text-xs">v4.0</span></h1>
       </div>
 
-      <div class="flex items-center gap-3 max-w-full overflow-x-auto no-scrollbar">
-        <div class="flex flex-col">
-          <select id="modelSelect1" class="theme-card text-xs rounded-xl p-2 border focus:outline-none focus:border-blue-500 font-mono w-44 sm:w-56"></select>
+      <div class="flex items-center gap-4 max-w-full overflow-x-auto no-scrollbar shrink-0">
+        <div class="flex flex-col shrink-0 min-w-[150px] sm:min-w-[200px]">
+          <select id="modelSelect1" class="theme-card text-xs rounded-xl p-2.5 border focus:outline-none focus:border-blue-500 font-mono w-full h-10 cursor-pointer"></select>
           <div id="capabilities1" class="flex gap-1 mt-1 min-h-[14px]"></div>
         </div>
 
-        <label class="flex items-center gap-1.5 theme-card px-2.5 py-1.5 rounded-xl cursor-pointer hover:opacity-90 transition border theme-border text-xs font-bold shrink-0">
+        <label class="flex items-center gap-1.5 theme-card px-3 py-2 rounded-xl cursor-pointer hover:opacity-90 transition border theme-border text-xs font-bold shrink-0 h-10 select-none">
           <input type="checkbox" id="compareMode" class="form-checkbox text-blue-500 rounded scale-90">
           <span>Сравнение</span>
         </label>
 
-        <div id="model2Wrapper" class="flex flex-col hidden">
-          <select id="modelSelect2" class="theme-card text-xs rounded-xl p-2 border focus:outline-none focus:border-green-500 font-mono w-44 sm:w-56"></select>
+        <div id="model2Wrapper" class="flex flex-col shrink-0 min-w-[150px] sm:min-w-[200px] hidden">
+          <select id="modelSelect2" class="theme-card text-xs rounded-xl p-2.5 border focus:outline-none focus:border-green-500 font-mono w-full h-10 cursor-pointer"></select>
           <div id="capabilities2" class="flex gap-1 mt-1 min-h-[14px]"></div>
         </div>
       </div>
     </header>
 
     <div id="chatWindow" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-      <div id="layoutWrapper" class="max-w-3xl mx-auto w-full space-y-6">
-        </div>
+      <div id="layoutWrapper" class="max-w-3xl mx-auto w-full space-y-6"></div>
     </div>
 
     <div class="p-4 w-full max-w-3xl mx-auto flex-none pb-6">
       <div id="filePreviewContainer" class="flex flex-wrap gap-2 mb-2 px-2"></div>
       
       <div class="theme-card border theme-border rounded-3xl p-2 flex items-end gap-2 shadow-xl relative">
-        
-        <label class="p-3 rounded-full hover:bg-gray-500/30 bg-gray-500/10 cursor-pointer transition flex items-center justify-center text-blue-400 shrink-0 mb-0.5" title="Прикрепить схемы/логи (Только Gemini)">
+        <label class="p-3 rounded-full hover:bg-gray-500/30 bg-gray-500/10 cursor-pointer transition flex items-center justify-center text-blue-400 shrink-0 mb-0.5" title="Прикрепить схемы/логи">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
           </svg>
@@ -143,9 +143,9 @@
 
         <textarea id="promptInput" rows="1" class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm p-2.5 resize-none overflow-y-auto max-h-40" placeholder="Введите запрос к ИИ..."></textarea>
         
-        <button id="sendBtn" class="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full transition flex items-center justify-center shadow-md shrink-0 mb-0.5">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l92 2-9-18-9 18 9-2zm0 0v-8" />
+        <button id="sendBtn" class="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full transition flex items-center justify-center shadow-md shrink-0 mb-0.5" title="Отправить запрос">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
           </svg>
         </button>
       </div>
@@ -188,8 +188,20 @@
     const exportChatBtn = document.getElementById('exportChatBtn');
     const clearAllBtn = document.getElementById('clearAllBtn');
 
-    burgerBtn.onclick = () => { sidebar.classList.add('active'); sidebarOverlay.classList.remove('hidden'); };
-    sidebarOverlay.onclick = () => { sidebar.classList.remove('active'); sidebarOverlay.classList.add('hidden'); };
+    // Логика управления сайдбаром для ПК и Мобильных
+    burgerBtn.onclick = () => { 
+      if (window.innerWidth < 768) {
+        sidebar.classList.toggle('-translate-x-full');
+        sidebarOverlay.classList.toggle('hidden');
+      } else {
+        sidebar.classList.toggle('sidebar-desktop-hidden');
+      }
+    };
+    
+    sidebarOverlay.onclick = () => { 
+      sidebar.classList.add('-translate-x-full'); 
+      sidebarOverlay.classList.add('hidden'); 
+    };
 
     themeToggleBtn.onclick = () => {
       document.body.classList.toggle('light-theme');
@@ -227,7 +239,7 @@
       saveState();
       renderSidebarSessions();
       renderActiveChat();
-      if(window.innerWidth < 768) { sidebar.classList.remove('active'); sidebarOverlay.classList.add('hidden'); }
+      if(window.innerWidth < 768) { sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('hidden'); }
     }
 
     function saveState() {
@@ -256,7 +268,7 @@
       saveState();
       renderSidebarSessions();
       renderActiveChat();
-      if(window.innerWidth < 768) { sidebar.classList.remove('active'); sidebarOverlay.classList.add('hidden'); }
+      if(window.innerWidth < 768) { sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('hidden'); }
     }
 
     window.deleteSession = function(id, event) {
@@ -296,7 +308,7 @@
         const data = await res.json();
         allModelsData = data.models || [];
         applyFiltering();
-      } catch (e) { console.error('Ошибка считывания ТУ моделей с прокси.'); }
+      } catch (e) { console.error('Ошибка считывания моделей с прокси.'); }
     }
 
     function applyFiltering() {
@@ -308,17 +320,33 @@
         return true;
       });
 
-      [modelSelect1, modelSelect2].forEach((select, idx) => {
-        const currentSelected = select.value;
+      // Чтение ранее выбранных моделей из кэша
+      const savedM1 = localStorage.getItem('gemini_hub_model1');
+      const savedM2 = localStorage.getItem('gemini_hub_model2');
+
+      [modelSelect1, modelSelect2].forEach((select) => {
         select.innerHTML = '';
         filtered.forEach(m => {
           const opt = document.createElement('option');
           opt.value = m.id; opt.textContent = m.label || m.id;
           select.appendChild(opt);
         });
-        if(currentSelected && filtered.find(m => m.id === currentSelected)) select.value = currentSelected;
-        else if(idx === 1 && select.options.length > 1) select.selectedIndex = 1;
       });
+
+      // Восстановление значений с проверкой на существование модели в списке
+      if (savedM1 && filtered.find(m => m.id === savedM1)) {
+        modelSelect1.value = savedM1;
+      } else if (modelSelect1.options.length > 0) {
+        modelSelect1.selectedIndex = 0;
+      }
+
+      if (savedM2 && filtered.find(m => m.id === savedM2)) {
+        modelSelect2.value = savedM2;
+      } else if (modelSelect2.options.length > 1) {
+        modelSelect2.selectedIndex = 1;
+      } else if (modelSelect2.options.length > 0) {
+        modelSelect2.selectedIndex = 0;
+      }
 
       drawCapabilitiesBadges(modelSelect1.value, capabilities1);
       drawCapabilitiesBadges(modelSelect2.value, capabilities2);
@@ -333,8 +361,17 @@
       });
     });
 
-    modelSelect1.onchange = (e) => drawCapabilitiesBadges(e.target.value, capabilities1);
-    modelSelect2.onchange = (e) => drawCapabilitiesBadges(e.target.value, capabilities2);
+    // Обработчики выбора с сохранением в localStorage
+    modelSelect1.onchange = (e) => {
+      localStorage.setItem('gemini_hub_model1', e.target.value);
+      drawCapabilitiesBadges(e.target.value, capabilities1);
+    };
+    
+    modelSelect2.onchange = (e) => {
+      localStorage.setItem('gemini_hub_model2', e.target.value);
+      drawCapabilitiesBadges(e.target.value, capabilities2);
+    };
+
     compareModeCheck.onchange = () => { model2Wrapper.classList.toggle('hidden', !compareModeCheck.checked); renderActiveChat(); };
 
     function renderActiveChat() {
