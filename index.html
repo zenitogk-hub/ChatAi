@@ -2,99 +2,111 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>AI Workspace Dual & Multimodal</title>
+  <title>AI Control Hub</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
-    /* Базовые переменные для тем */
     :root {
-      --bg-main: #111827; /* gray-900 */
-      --bg-sec: #1f2937; /* gray-800 */
-      --bg-third: #374151; /* gray-700 */
-      --text-main: #f3f4f6; /* gray-100 */
-      --text-sec: #9ca3af; /* gray-400 */
-      --border-color: #374151; /* gray-700 */
-      --code-bg: #1f2937;
+      --bg-main: #0f172a; /* slate-900 */
+      --bg-sec: #1e293b; /* slate-800 */
+      --bg-third: #334155; /* slate-700 */
+      --text-main: #f8fafc; /* slate-50 */
+      --text-sec: #94a3b8; /* slate-400 */
+      --border-color: #334155; 
+      --code-bg: #1e293b;
     }
     
     body.light-theme {
-      --bg-main: #f3f4f6; /* gray-100 */
-      --bg-sec: #ffffff; /* white */
-      --bg-third: #e5e7eb; /* gray-200 */
-      --text-main: #111827; /* gray-900 */
-      --text-sec: #4b5563; /* gray-600 */
-      --border-color: #d1d5db; /* gray-300 */
-      --code-bg: #e5e7eb;
+      --bg-main: #f1f5f9; /* slate-100 */
+      --bg-sec: #ffffff; 
+      --bg-third: #e2e8f0; /* slate-200 */
+      --text-main: #0f172a; 
+      --text-sec: #64748b; 
+      --border-color: #cbd5e1; 
+      --code-bg: #e2e8f0;
     }
 
-    body { background-color: var(--bg-main); color: var(--text-main); transition: all 0.3s; }
+    body { background-color: var(--bg-main); color: var(--text-main); transition: background-color 0.2s, color 0.2s; }
     .theme-bg-sec { background-color: var(--bg-sec); border-color: var(--border-color); }
     .theme-bg-third { background-color: var(--bg-third); border-color: var(--border-color); color: var(--text-main); }
     .theme-text-sec { color: var(--text-sec); }
     .theme-border { border-color: var(--border-color); }
 
-    .chat-container { height: calc(100vh - 180px); }
-    .markdown-body pre { background: var(--code-bg); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0; }
-    .markdown-body code { font-family: monospace; background: rgba(156, 163, 175, 0.2); padding: 0.2rem 0.4rem; border-radius: 0.25rem; color: #ef4444; }
+    .chat-container { height: calc(100vh - 220px); }
+    .markdown-body pre { background: var(--code-bg); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0; border: 1px solid var(--border-color); }
+    .markdown-body code { font-family: monospace; background: rgba(148, 163, 184, 0.2); padding: 0.2rem 0.4rem; border-radius: 0.25rem; color: #f43f5e; }
     .markdown-body pre code { color: inherit; background: transparent; padding: 0; }
     
-    /* Модальное окно настроек */
     #settingsModal { display: none; }
     #settingsModal.active { display: flex; }
+    
+    .badge { display: inline-flex; items-center: center; gap: 0.25rem; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 0.375rem; }
   </style>
 </head>
-<body class="font-sans">
+<body class="font-sans antialiased">
 
-  <header class="theme-bg-sec border-b theme-border p-4 sticky top-0 z-50 shadow-md">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-      <h1 class="text-xl font-bold text-blue-500 flex items-center gap-2">🚀 AI Hub <span class="text-xs theme-text-sec">v2.1</span></h1>
+  <header class="theme-bg-sec border-b theme-border p-4 sticky top-0 z-50 shadow-lg">
+    <div class="max-w-7xl mx-auto flex flex-col gap-3">
       
-      <div class="flex items-center flex-wrap gap-4">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <h1 class="text-lg font-bold tracking-wider text-blue-500 flex items-center gap-2">🤖 AI DISPATCHER <span class="text-xs theme-text-sec font-mono">v3.0</span></h1>
         
-        <div class="flex flex-col">
-          <span class="text-xs theme-text-sec font-bold mb-0.5">Категория</span>
-          <select id="categoryFilter" class="theme-bg-third text-sm rounded-lg p-2 border focus:outline-none focus:border-blue-500 w-32">
-            <option value="all">Все модели</option>
-          </select>
+        <div class="flex items-center flex-wrap gap-4">
+          <div class="flex flex-col min-w-[240px]">
+            <span class="text-xs theme-text-sec font-bold mb-1">Модель 1 (Основная)</span>
+            <select id="modelSelect1" class="theme-bg-third text-sm rounded-lg p-2 border focus:outline-none focus:border-blue-500 w-full font-mono text-xs"></select>
+            <div id="capabilities1" class="flex gap-1 mt-1 flex-wrap min-h-[18px]"></div>
+          </div>
+
+          <label class="flex items-center gap-2 theme-bg-third px-3 py-2 rounded-lg cursor-pointer hover:opacity-90 transition shadow-sm h-9 mt-4">
+            <input type="checkbox" id="compareMode" class="form-checkbox text-blue-500 rounded">
+            <span class="text-xs font-bold tracking-wide">🌓 СРАВНЕНИЕ</span>
+          </label>
+
+          <div id="model2Wrapper" class="flex flex-col min-w-[240px] hidden">
+            <span class="text-xs theme-text-sec font-bold mb-1">Модель 2</span>
+            <select id="modelSelect2" class="theme-bg-third text-sm rounded-lg p-2 border focus:outline-none focus:border-green-500 w-full font-mono text-xs"></select>
+            <div id="capabilities2" class="flex gap-1 mt-1 flex-wrap min-h-[18px]"></div>
+          </div>
+
+          <button id="settingsBtn" class="theme-bg-third p-2 rounded-lg hover:opacity-90 transition mt-4 border theme-border h-9 w-9 flex items-center justify-center shadow-sm" title="Управление">
+            ⚙️
+          </button>
         </div>
-
-        <div class="flex flex-col">
-          <span class="text-xs theme-text-sec font-bold mb-0.5">Модель 1 (Основная)</span>
-          <select id="modelSelect1" class="theme-bg-third text-sm rounded-lg p-2 border focus:outline-none focus:border-blue-500 w-64"></select>
-        </div>
-
-        <label class="flex items-center gap-2 theme-bg-third px-3 py-2 rounded-lg cursor-pointer hover:opacity-80 transition mt-4">
-          <input type="checkbox" id="compareMode" class="form-checkbox text-blue-500 rounded">
-          <span class="text-sm font-medium">🌓 Сравнение</span>
-        </label>
-
-        <div id="model2Wrapper" class="flex flex-col hidden">
-          <span class="text-xs theme-text-sec font-bold mb-0.5">Модель 2</span>
-          <select id="modelSelect2" class="theme-bg-third text-sm rounded-lg p-2 border focus:outline-none focus:border-green-500 w-64"></select>
-        </div>
-
-        <button id="settingsBtn" class="theme-bg-third p-2 rounded-lg hover:opacity-80 transition mt-4 border theme-border" title="Настройки">
-          ⚙️
-        </button>
       </div>
+
+      <div class="flex flex-wrap items-center gap-2 pt-2 border-t theme-border">
+        <span class="text-xs theme-text-sec font-bold mr-2">Фильтры спецификации:</span>
+        <button class="filter-chip bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-medium" data-filter="all">Все матрицы</button>
+        <button class="filter-chip theme-bg-third text-xs px-3 py-1 rounded-full font-medium border theme-border hover:bg-blue-500 hover:text-white transition" data-filter="files">📁 Работа с файлами/фото (Gemini)</button>
+        <button class="filter-chip theme-bg-third text-xs px-3 py-1 rounded-full font-medium border theme-border hover:bg-blue-500 hover:text-white transition" data-filter="text">✍️ Только Текст (Groq)</button>
+        <button class="filter-chip theme-bg-third text-xs px-3 py-1 rounded-full font-medium border theme-border hover:bg-blue-500 hover:text-white transition" data-filter="speed">⚡ Высокая скорость (Flash/3B/8B)</button>
+        <button class="filter-chip theme-bg-third text-xs px-3 py-1 rounded-full font-medium border theme-border hover:bg-blue-500 hover:text-white transition" data-filter="power">🧠 Высшая логика (Pro/70B+)</button>
+        
+        <input type="text" id="modelSearch" placeholder="Поиск по названию..." class="ml-auto theme-bg-third text-xs px-3 py-1 rounded-lg border theme-border focus:outline-none focus:border-blue-500 w-48">
+      </div>
+
     </div>
   </header>
 
-  <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
-    <div class="theme-bg-sec p-6 rounded-xl shadow-lg w-96 border theme-border">
+  <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 items-center justify-center backdrop-blur-xs">
+    <div class="theme-bg-sec p-6 rounded-xl shadow-2xl w-96 border theme-border animate-fade-in">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-bold">Настройки</h2>
-        <button id="closeSettings" class="text-red-400 font-bold text-xl">&times;</button>
+        <h2 class="text-md font-bold tracking-wider">СЕРВИСНЫЕ ИНСТРУМЕНТЫ</h2>
+        <button id="closeSettings" class="text-red-400 font-bold text-xl hover:text-red-500 transition">&times;</button>
       </div>
-      <div class="space-y-4">
-        <button id="refreshModelsBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg transition">
-          🔄 Обновить список моделей
+      <div class="space-y-3">
+        <button id="refreshModelsBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm py-2.5 rounded-lg font-bold transition shadow">
+          🔄 Обновить конфигурацию моделей
         </button>
-        <button id="exportChatBtn" class="w-full bg-green-600 hover:bg-green-500 text-white py-2 rounded-lg transition">
-          💾 Экспорт чата (Markdown)
+        <button id="exportChatBtn" class="w-full bg-green-600 hover:bg-green-500 text-white text-sm py-2.5 rounded-lg font-bold transition shadow">
+          💾 Экспорт сессии (Markdown)
         </button>
-        <button id="themeToggleBtn" class="w-full theme-bg-third py-2 rounded-lg transition border theme-border">
-          🌗 Переключить тему
+        <button id="themeToggleBtn" class="w-full theme-bg-third text-sm py-2.5 rounded-lg font-bold transition border theme-border shadow-sm">
+          🌗 Смена цветовой схемы интерфейса
+        </button>
+        <button id="clearHistoryBtn" class="w-full bg-red-700 hover:bg-red-600 text-white text-sm py-2.5 rounded-lg font-bold transition shadow">
+          🗑️ Очистить энергонезависимую историю
         </button>
       </div>
     </div>
@@ -103,42 +115,40 @@
   <main class="max-w-7xl mx-auto p-4">
     <div id="chatWindow" class="chat-container overflow-y-auto space-y-4 pr-2 flex gap-4 items-start">
       <div id="singleTrack" class="w-full space-y-4"></div>
-      
-      <div id="compareTrack1" class="w-1/2 space-y-4 hidden border-r theme-border pr-4">
-        <div class="text-center text-xs font-bold text-blue-500 tracking-wider uppercase border-b theme-border pb-2 mb-2">Модель 1</div>
-      </div>
-      <div id="compareTrack2" class="w-1/2 space-y-4 hidden pl-2">
-        <div class="text-center text-xs font-bold text-green-500 tracking-wider uppercase border-b theme-border pb-2 mb-2">Модель 2</div>
-      </div>
+      <div id="compareTrack1" class="w-1/2 space-y-4 hidden border-r theme-border pr-4"></div>
+      <div id="compareTrack2" class="w-1/2 space-y-4 hidden pl-2"></div>
     </div>
   </main>
 
-  <footer class="fixed bottom-0 left-0 w-full theme-bg-sec border-t theme-border p-4">
+  <footer class="fixed bottom-0 left-0 w-full theme-bg-sec border-t theme-border p-4 shadow-inner">
     <div class="max-w-4xl mx-auto">
       <div id="filePreviewContainer" class="flex flex-wrap gap-2 mb-2"></div>
       <div class="flex items-center gap-2">
-        <label class="theme-bg-third hover:opacity-80 p-3 rounded-xl cursor-pointer transition flex items-center justify-center shadow" title="Прикрепить файл (Только для Gemini)">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <label class="theme-bg-third hover:opacity-90 p-3 rounded-xl cursor-pointer transition flex items-center justify-center shadow-sm border theme-border" title="Добавить файл (Только для систем Gemini)">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
           </svg>
           <input type="file" id="fileInput" class="hidden" multiple>
         </label>
-        <textarea id="promptInput" rows="1" class="flex-1 theme-bg-third rounded-xl p-3 border focus:outline-none focus:border-blue-500 resize-none shadow" placeholder="Напишите запрос... (Файлы поддерживают только модели Gemini)"></textarea>
-        <button id="sendBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl transition shadow flex items-center justify-center">
-          Отправить
+        <textarea id="promptInput" rows="1" class="flex-1 theme-bg-third rounded-xl p-3 border focus:outline-none focus:border-blue-500 resize-none text-sm shadow-sm" placeholder="Введите команду или запрос... (Файлы/Изображения обрабатываются только веткой Gemini)"></textarea>
+        <button id="sendBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-3 rounded-xl transition shadow-md text-sm tracking-wide">
+          ОТПРАВИТЬ
         </button>
       </div>
     </div>
   </footer>
 
   <script>
-    // === ВСТАВЬ СЮДА СВОЙ URL ===
+    // Жестко зашитый рабочий URL прокси-сервера
     const WORKER_URL = 'https://chat-ai-proxy.zenitogk.workers.dev';
 
     let attachedFiles = [];
-    let chatHistory = [];
-    let allModelsData = []; // Сохраняем все модели для фильтрации
+    // Энергонезависимая история — выгружаем из локального хранилища браузера
+    let chatHistory = JSON.parse(localStorage.getItem('ai_sys_history')) || [];
+    let allModelsData = []; 
+    let currentFilter = 'all';
 
+    // Элементы управления
     const compareModeCheck = document.getElementById('compareMode');
     const model2Wrapper = document.getElementById('model2Wrapper');
     const singleTrack = document.getElementById('singleTrack');
@@ -146,119 +156,208 @@
     const compareTrack2 = document.getElementById('compareTrack2');
     const modelSelect1 = document.getElementById('modelSelect1');
     const modelSelect2 = document.getElementById('modelSelect2');
-    const categoryFilter = document.getElementById('categoryFilter');
+    const capabilities1 = document.getElementById('capabilities1');
+    const capabilities2 = document.getElementById('capabilities2');
     const fileInput = document.getElementById('fileInput');
     const filePreviewContainer = document.getElementById('filePreviewContainer');
     const promptInput = document.getElementById('promptInput');
     const sendBtn = document.getElementById('sendBtn');
     const chatWindow = document.getElementById('chatWindow');
+    const modelSearch = document.getElementById('modelSearch');
 
-    // Элементы настроек
+    // Настройки
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsModal = document.getElementById('settingsModal');
     const closeSettings = document.getElementById('closeSettings');
     const themeToggleBtn = document.getElementById('themeToggleBtn');
     const exportChatBtn = document.getElementById('exportChatBtn');
     const refreshModelsBtn = document.getElementById('refreshModelsBtn');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
-    // --- Настройки и UI ---
+    // --- Управление сессией окон настроек ---
     settingsBtn.onclick = () => settingsModal.classList.add('active');
     closeSettings.onclick = () => settingsModal.classList.remove('active');
     window.onclick = (e) => { if(e.target === settingsModal) settingsModal.classList.remove('active'); };
 
     themeToggleBtn.onclick = () => {
       document.body.classList.toggle('light-theme');
-      const isLight = document.body.classList.contains('light-theme');
-      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      localStorage.setItem('ai_theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+    };
+    if(localStorage.getItem('ai_theme') === 'light') document.body.classList.add('light-theme');
+
+    clearHistoryBtn.onclick = () => {
+      if(confirm('Уничтожить все сохраненные логи текущей сессии?')) {
+        chatHistory = [];
+        localStorage.removeItem('ai_sys_history');
+        renderChatFromHistory();
+        settingsModal.classList.remove('active');
+      }
     };
 
-    if(localStorage.getItem('theme') === 'light') document.body.classList.add('light-theme');
-
     exportChatBtn.onclick = () => {
-      if (chatHistory.length === 0) return alert('История чата пуста!');
-      let mdContent = "# История чата (AI Hub)\n\n";
+      if (chatHistory.length === 0) return alert('Лог-файл пуст.');
+      let mdContent = "# Мониторинг AI Сессии\n\n";
       chatHistory.forEach(msg => {
-        const role = msg.role === 'user' ? '👤 **Вы**' : '🤖 **AI**';
+        const role = msg.role === 'user' ? '👤 **USER**' : `🤖 **AI (${msg.modelId || 'Система'})**`;
         mdContent += `${role}:\n${msg.content}\n\n---\n\n`;
       });
       const blob = new Blob([mdContent], { type: 'text/markdown' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `chat_export_${new Date().toISOString().slice(0,10)}.md`;
+      a.download = `ai_hub_report_${new Date().toISOString().slice(0,10)}.md`;
       a.click();
       settingsModal.classList.remove('active');
     };
 
-    refreshModelsBtn.onclick = () => {
-      loadModels();
-      settingsModal.classList.remove('active');
-    };
+    refreshModelsBtn.onclick = () => { loadModels(); settingsModal.classList.remove('active'); };
 
-    // --- Логика Моделей и Фильтрации ---
+    // --- Автоматический анализатор архитектуры и возможностей ТУ моделей ---
+    function evaluateCapabilities(modelId) {
+      const id = modelId.toLowerCase();
+      const isGemini = id.includes('gemini');
+      return {
+        files: isGemini,
+        images: isGemini,
+        text: true,
+        speed: id.includes('flash') || id.includes('8b') || id.includes('3b') || id.includes('mini'),
+        power: id.includes('pro') || id.includes('70b') || id.includes('72b') || id.includes('large') || id.includes('r1')
+      };
+    }
+
+    function drawCapabilitiesBadges(modelId, targetContainer) {
+      targetContainer.innerHTML = '';
+      if(!modelId) return;
+      const caps = evaluateCapabilities(modelId);
+      
+      if(caps.files) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-purple-600 text-white">📁 Файлы</span>');
+      if(caps.images) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-pink-600 text-white">🖼️ Фото</span>');
+      if(caps.text && !caps.files) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-gray-600 text-white">✍️ Только Текст</span>');
+      if(caps.speed) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-amber-500 text-gray-900">⚡ Быстрая</span>');
+      if(caps.power) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-red-600 text-white">🧠 Мощная</span>');
+    }
+
+    // --- Интеллектуальный Фильтр Конфигураций ---
     async function loadModels() {
       try {
         const res = await fetch(`${WORKER_URL}/v1/models`);
         const data = await res.json();
         allModelsData = data.models || [];
-        
-        // Собираем уникальные категории из воркера
-        const categories = [...new Set(allModelsData.map(m => m.category).filter(Boolean))];
-        categoryFilter.innerHTML = '<option value="all">Все модели</option>';
-        categories.forEach(cat => {
-          const opt = document.createElement('option');
-          opt.value = cat;
-          const names = { 'fast': 'Быстрые', 'standard': 'Стандартные', 'reasoning': 'Рассуждающие', 'latest': 'Новейшие', 'stable': 'Стабильные', 'qwen': 'Qwen' };
-          opt.textContent = names[cat] || cat;
-          categoryFilter.appendChild(opt);
-        });
-
-        renderModelSelects('all');
+        applyFiltering();
       } catch (e) {
-        alert('Ошибка подключения к воркеру. Проверьте WORKER_URL.');
+        alert('Критический сбой считывания конфигурации моделей с прокси-сервера.');
       }
     }
 
-    function renderModelSelects(filterCategory) {
-      const filtered = filterCategory === 'all' 
-        ? allModelsData 
-        : allModelsData.filter(m => m.category === filterCategory);
+    function applyFiltering() {
+      const searchStr = modelSearch.value.toLowerCase();
+      const filtered = allModelsData.filter(m => {
+        const matchesSearch = m.id.toLowerCase().includes(searchStr) || (m.label && m.label.toLowerCase().includes(searchStr));
+        if(!matchesSearch) return false;
+        
+        const caps = evaluateCapabilities(m.id);
+        if(currentFilter === 'files') return caps.files;
+        if(currentFilter === 'text') return !caps.files;
+        if(currentFilter === 'speed') return caps.speed;
+        if(currentFilter === 'power') return caps.power;
+        return true;
+      });
 
       [modelSelect1, modelSelect2].forEach((select, idx) => {
-        const currentVal = select.value;
+        const currentSelected = select.value;
         select.innerHTML = '';
         filtered.forEach(m => {
           const opt = document.createElement('option');
           opt.value = m.id;
-          opt.textContent = m.label;
+          opt.textContent = m.label || m.id;
           select.appendChild(opt);
         });
-        // Пытаемся восстановить выбор или выбираем разные модели для 1 и 2
-        if(currentVal && filtered.find(m => m.id === currentVal)) {
-          select.value = currentVal;
-        } else if (idx === 1 && select.options.length > 1) {
+        if(currentSelected && filtered.find(m => m.id === currentSelected)) {
+          select.value = currentSelected;
+        } else if(idx === 1 && select.options.length > 1) {
           select.selectedIndex = 1;
         }
       });
+
+      drawCapabilitiesBadges(modelSelect1.value, capabilities1);
+      drawCapabilitiesBadges(modelSelect2.value, capabilities2);
     }
 
-    categoryFilter.addEventListener('change', (e) => renderModelSelects(e.target.value));
-
-    // --- Режимы и Файлы ---
-    compareModeCheck.addEventListener('change', (e) => {
-      model2Wrapper.classList.toggle('hidden', !e.target.checked);
-      singleTrack.classList.toggle('hidden', e.target.checked);
-      compareTrack1.classList.toggle('hidden', !e.target.checked);
-      compareTrack2.classList.toggle('hidden', !e.target.checked);
-      
-      chatWindow.innerHTML = '';
-      if(e.target.checked) {
-        chatWindow.appendChild(compareTrack1);
-        chatWindow.appendChild(compareTrack2);
-      } else {
-        chatWindow.appendChild(singleTrack);
-      }
+    // Обработчики фильтров
+    document.querySelectorAll('.filter-chip').forEach(chip => {
+      chip.addEventListener('click', function() {
+        document.querySelectorAll('.filter-chip').forEach(c => {
+          c.className = 'filter-chip theme-bg-third text-xs px-3 py-1 rounded-full font-medium border theme-border hover:bg-blue-500 hover:text-white transition';
+        });
+        this.className = 'filter-chip bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-medium';
+        currentFilter = this.getAttribute('data-filter');
+        applyFiltering();
+      });
     });
 
+    modelSearch.addEventListener('input', applyFiltering);
+    modelSelect1.addEventListener('change', (e) => drawCapabilitiesBadges(e.target.value, capabilities1));
+    modelSelect2.addEventListener('change', (e) => drawCapabilitiesBadges(e.target.value, capabilities2));
+
+    // --- Архитектура распределения истории сообщений ---
+    compareModeCheck.addEventListener('change', (e) => {
+      model2Wrapper.classList.toggle('hidden', !e.target.checked);
+      renderChatFromHistory();
+    });
+
+    function renderChatFromHistory() {
+      // Очищаем и заново инициализируем разметку треков
+      singleTrack.innerHTML = '';
+      compareTrack1.innerHTML = '<div class="text-center text-xs font-bold text-blue-500 tracking-wider uppercase border-b theme-border pb-2 mb-2">Модель 1 (Основная)</div>';
+      compareTrack2.innerHTML = '<div class="text-center text-xs font-bold text-green-500 tracking-wider uppercase border-b theme-border pb-2 mb-2">Модель 2 (Параллельная)</div>';
+      
+      const isCompare = compareModeCheck.checked;
+      singleTrack.classList.toggle('hidden', isCompare);
+      compareTrack1.classList.toggle('hidden', !isCompare);
+      compareTrack2.classList.toggle('hidden', !isCompare);
+
+      chatHistory.forEach(msg => {
+        if(msg.role === 'user') {
+          const fileBadges = (msg.files || []).map(f => `<span class="text-xs text-blue-400 block font-mono mt-1">📎 Данные: ${f.name}</span>`).join('');
+          const html = `
+            <div class="flex justify-end mb-4 animate-fade-in">
+              <div class="rounded-2xl px-4 py-3 max-w-2xl shadow-md border" style="background-color: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.2);">
+                <div class="text-xs text-blue-400 font-bold mb-1">ОПЕРАТОР:</div>
+                <div class="whitespace-pre-wrap text-sm">${msg.content || '(Файл конфигурации)'}</div>
+                ${fileBadges}
+              </div>
+            </div>`;
+          if(isCompare) {
+            compareTrack1.insertAdjacentHTML('beforeend', html);
+            compareTrack2.insertAdjacentHTML('beforeend', html);
+          } else {
+            singleTrack.insertAdjacentHTML('beforeend', html);
+          }
+        } else {
+          // Вывод ответов вычислительных моделей
+          const isTrack2 = msg.track === 'track2';
+          const bColor = isTrack2 ? 'border-green-500' : 'border-blue-500';
+          const tColor = isTrack2 ? 'text-green-400' : 'text-blue-400';
+          
+          const html = `
+            <div class="flex justify-start mb-4 w-full">
+              <div class="theme-bg-sec border-l-4 ${bColor} rounded-xl px-4 py-3 w-full shadow-md markdown-body theme-border">
+                <div class="text-xs ${tColor} font-bold font-mono mb-1.5">${msg.modelId}:</div>
+                <div class="text-sm">${marked.parse(msg.content)}</div>
+              </div>
+            </div>`;
+            
+          if(isCompare) {
+            if(isTrack2) compareTrack2.insertAdjacentHTML('beforeend', html);
+            else compareTrack1.insertAdjacentHTML('beforeend', html);
+          } else {
+            singleTrack.insertAdjacentHTML('beforeend', html);
+          }
+        }
+      });
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    // --- Обработка ввода и отправка пакетов ---
     fileInput.addEventListener('change', async (e) => {
       for (let file of e.target.files) {
         const base64Data = await convertToBase64(file);
@@ -281,19 +380,15 @@
       filePreviewContainer.innerHTML = '';
       attachedFiles.forEach((file, index) => {
         const div = document.createElement('div');
-        div.className = 'theme-bg-third text-xs px-3 py-1.5 rounded-lg flex items-center gap-2 border theme-border';
+        div.className = 'theme-bg-third text-xs px-3 py-1.5 rounded-lg flex items-center gap-2 border theme-border shadow-sm font-mono';
         div.innerHTML = `<span class="truncate max-w-xs">📎 ${file.name}</span>
                          <button onclick="removeFile(${index})" class="text-red-400 hover:text-red-500 font-bold ml-1">×</button>`;
         filePreviewContainer.appendChild(div);
       });
     }
 
-    window.removeFile = function(index) {
-      attachedFiles.splice(index, 1);
-      renderFilePreviews();
-    }
+    window.removeFile = function(index) { attachedFiles.splice(index, 1); renderFilePreviews(); };
 
-    // --- Отправка сообщений ---
     sendBtn.addEventListener('click', async () => {
       const text = promptInput.value.trim();
       if (!text && attachedFiles.length === 0) return;
@@ -301,85 +396,80 @@
       promptInput.value = '';
       promptInput.style.height = 'auto';
 
-      const parts = [];
-      if (text) parts.push({ text: text });
-      attachedFiles.forEach(f => parts.push({ inlineData: { mimeType: f.type, data: f.base64 } }));
+      // Формируем payload для истории и воркера
+      const payloadParts = [];
+      if (text) payloadParts.push({ text: text });
+      attachedFiles.push(...attachedFiles); // Фиксация вложений
 
-      const userMessage = { role: 'user', parts: parts, content: text };
-      chatHistory.push(userMessage);
+      const userMsgRecord = { role: 'user', content: text, files: [...attachedFiles] };
+      chatHistory.push(userMsgRecord);
+      localStorage.setItem('ai_sys_history', JSON.stringify(chatHistory));
 
-      renderUserMessage(text, [...attachedFiles]);
+      renderChatFromHistory(); 
+      const currentFiles = [...attachedFiles];
       attachedFiles = [];
       renderFilePreviews();
 
       if (compareModeCheck.checked) {
-        sendToModel(modelSelect1.value, compareTrack1, 'blue');
-        sendToModel(modelSelect2.value, compareTrack2, 'green');
+        executeModelQuery(modelSelect1.value, 'track1');
+        executeModelQuery(modelSelect2.value, 'track2');
       } else {
-        sendToModel(modelSelect1.value, singleTrack, 'blue');
+        executeModelQuery(modelSelect1.value, 'track1');
       }
     });
 
-    function renderUserMessage(text, files) {
-      const fileNames = files.map(f => `<span class="text-blue-500 block text-xs mt-1">📎 Файл отправлен: ${f.name}</span>`).join('');
-      const htmlContent = `
-        <div class="flex justify-end mb-4">
-          <div class="bg-blue-100 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-2xl px-4 py-3 max-w-3xl shadow text-gray-900 dark:text-gray-100" style="background-color: rgba(59, 130, 246, 0.1);">
-            <div class="text-xs text-blue-500 font-bold mb-1">Вы:</div>
-            <div class="whitespace-pre-wrap">${text || '(Файл без текста)'}</div>
-            ${fileNames}
-          </div>
-        </div>`;
-      
-      if (compareModeCheck.checked) {
-        compareTrack1.insertAdjacentHTML('beforeend', htmlContent);
-        compareTrack2.insertAdjacentHTML('beforeend', htmlContent);
-      } else {
-        singleTrack.insertAdjacentHTML('beforeend', htmlContent);
-      }
-      chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
+    async function executeModelQuery(modelId, trackName) {
+      const blockId = 'loader-' + Math.random().toString(36).substr(2, 9);
+      const targetTrackElement = trackName === 'track2' ? compareTrack2 : (compareModeCheck.checked ? compareTrack1 : singleTrack);
+      const bColor = trackName === 'track2' ? 'border-green-500' : 'border-blue-500';
+      const tColor = trackName === 'track2' ? 'text-green-400' : 'text-blue-400';
 
-    async function sendToModel(modelId, targetTrack, colorClass) {
-      const blockId = 'ai-' + Math.random().toString(36).substr(2, 9);
-      const bColor = colorClass === 'blue' ? 'border-blue-500' : 'border-green-500';
-      const tColor = colorClass === 'blue' ? 'text-blue-500' : 'text-green-500';
-      
-      const aiBlockHtml = `
+      const loadingHtml = `
         <div id="${blockId}" class="flex justify-start mb-4 w-full">
-          <div class="theme-bg-sec border-l-4 ${bColor} rounded-xl px-4 py-3 w-full shadow markdown-body theme-border">
-            <div class="text-xs ${tColor} font-bold mb-1">${modelId}:</div>
-            <div class="loading text-sm theme-text-sec animate-pulse">Думает...</div>
+          <div class="theme-bg-sec border-l-4 ${bColor} rounded-xl px-4 py-3 w-full shadow-md theme-border">
+            <div class="text-xs ${tColor} font-bold font-mono mb-1">${modelId}:</div>
+            <div class="text-xs theme-text-sec animate-pulse flex items-center gap-2">⚡ Вычисление ответа процессором...</div>
           </div>
         </div>`;
-      targetTrack.insertAdjacentHTML('beforeend', aiBlockHtml);
+      targetTrackElement.insertAdjacentHTML('beforeend', loadingHtml);
       chatWindow.scrollTop = chatWindow.scrollHeight;
 
       try {
+        // Формируем историю для отправки на Cloudflare Worker
+        const formattedMessages = chatHistory.map(msg => {
+          if (msg.role === 'user') {
+            const parts = [];
+            if (msg.content) parts.push({ text: msg.content });
+            if (msg.files) {
+              msg.files.forEach(f => parts.push({ inlineData: { mimeType: f.type, data: f.base64 } }));
+            }
+            return { role: 'user', parts: parts, content: msg.content };
+          }
+          return { role: 'assistant', content: msg.content };
+        });
+
         const res = await fetch(`${WORKER_URL}/v1/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: modelId, messages: chatHistory })
+          body: JSON.stringify({ model: modelId, messages: formattedMessages })
         });
         const data = await res.json();
         
-        const container = document.getElementById(blockId).querySelector('.markdown-body');
-        container.querySelector('.loading').remove();
-        
+        document.getElementById(blockId).remove();
+
         if (data.error) {
-          container.insertAdjacentHTML('beforeend', `<div class="text-red-500 font-medium">⚠️ Ошибка: ${data.error}</div>`);
+          const errHtml = `<div class="theme-bg-sec border-l-4 border-red-500 rounded-xl px-4 py-3 w-full shadow-md theme-border text-sm text-red-400 font-medium">⚠️ Ошибка системы: ${data.error}</div>`;
+          targetTrackElement.insertAdjacentHTML('beforeend', errHtml);
         } else {
-          container.insertAdjacentHTML('beforeend', `<div>${marked.parse(data.text)}</div>`);
-          if (!compareModeCheck.checked || targetTrack === compareTrack1) {
-            chatHistory.push({ role: 'assistant', content: data.text });
-          }
+          chatHistory.push({ role: 'assistant', modelId: modelId, content: data.text, track: trackName });
+          localStorage.setItem('ai_sys_history', JSON.stringify(chatHistory));
+          renderChatFromHistory();
         }
       } catch (e) {
-        const container = document.getElementById(blockId).querySelector('.markdown-body');
-        container.querySelector('.loading').remove();
-        container.insertAdjacentHTML('beforeend', `<div class="text-red-500 font-medium">⚠️ Ошибка связи с воркером</div>`);
+        document.getElementById(blockId).remove();
+        const errHtml = `<div class="theme-bg-sec border-l-4 border-red-500 rounded-xl px-4 py-3 w-full shadow-md theme-border text-sm text-red-400 font-medium">⚠️ Сбой линии связи с прокси</div>`;
+        targetTrackElement.insertAdjacentHTML('beforeend', errHtml);
       }
-      chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
     promptInput.addEventListener('input', function() {
@@ -387,7 +477,9 @@
       this.style.height = (this.scrollHeight) + 'px';
     });
 
+    // Стартовая инициализация данных сессии
     loadModels();
+    renderChatFromHistory();
   </script>
 </body>
 </html>
