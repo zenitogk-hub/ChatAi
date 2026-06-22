@@ -28,9 +28,11 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
   }
   .header h1 { font-size: 20px; color: #00d9ff; }
-  .header-actions { display: flex; gap: 6px; }
+  .header-actions { display: flex; gap: 6px; flex-wrap: wrap; }
   .header-actions button {
     background: #0f3460;
     border: none;
@@ -38,7 +40,7 @@
     padding: 6px 10px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     transition: background 0.2s;
   }
   .header-actions button:hover { background: #1a4a8a; }
@@ -107,8 +109,6 @@
     margin: 10px 0 8px 0;
     padding-bottom: 4px;
     border-bottom: 1px solid #0f3460;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
   }
   .model-item {
     display: flex;
@@ -118,13 +118,12 @@
     background: #16213e;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.15s;
     border: 2px solid transparent;
+    transition: all 0.15s;
   }
   .model-item:hover { background: #0f3460; }
   .model-item.selected { border-color: #00d9ff; background: #1a3a5c; }
   .model-item.disabled { opacity: 0.4; cursor: not-allowed; }
-  .model-item.disabled:hover { background: #16213e; }
   .model-checkbox {
     width: 18px;
     height: 18px;
@@ -157,8 +156,6 @@
     border-radius: 3px;
     font-size: 10px;
     font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
   }
   .badge-fast { background: #ff6b6b; color: white; }
   .badge-lite { background: #4ecdc4; color: #1a1a2e; }
@@ -198,26 +195,14 @@
     padding: 8px 12px;
     border-radius: 8px;
     font-size: 13px;
-    line-height: 1.4;
     white-space: pre-wrap;
     word-break: break-word;
+    line-height: 1.4;
   }
-  .message.user {
-    background: #0f3460;
-    margin-left: 15%;
-  }
-  .message.assistant {
-    background: #1a3a5c;
-    margin-right: 15%;
-  }
-  .message.error {
-    background: #5c1a1a;
-    color: #ff9999;
-  }
-  .chat-input {
-    display: flex;
-    gap: 8px;
-  }
+  .message.user { background: #0f3460; margin-left: 15%; }
+  .message.assistant { background: #1a3a5c; margin-right: 15%; }
+  .message.error { background: #5c1a1a; color: #ff9999; }
+  .chat-input { display: flex; gap: 8px; }
   .chat-input input {
     flex: 1;
     padding: 10px 12px;
@@ -235,18 +220,19 @@
     border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
-    font-size: 13px;
   }
-  .chat-input button:disabled {
-    background: #555;
-    cursor: not-allowed;
-    color: #999;
-  }
-  .current-model {
+  .chat-input button:disabled { background: #555; cursor: not-allowed; color: #999; }
+  .current-model { font-size: 11px; color: #888; margin-bottom: 6px; }
+  .legend {
     font-size: 11px;
     color: #888;
-    margin-bottom: 6px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    margin-top: 8px;
+    line-height: 1.6;
   }
+  .legend strong { color: #00d9ff; }
 
   /* === МОДАЛКИ === */
   .modal-overlay {
@@ -330,16 +316,22 @@
     font-size: 11px;
   }
 
-  .legend {
-    font-size: 11px;
-    color: #888;
-    padding: 8px 12px;
-    background: rgba(0,0,0,0.2);
-    border-radius: 6px;
+  .quick-prompts {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
     margin-top: 8px;
-    line-height: 1.6;
   }
-  .legend strong { color: #00d9ff; }
+  .quick-prompts button {
+    background: #0f3460;
+    border: 1px solid #1a4a8a;
+    color: #eee;
+    padding: 4px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .quick-prompts button:hover { background: #1a4a8a; }
 </style>
 </head>
 <body>
@@ -350,7 +342,7 @@
     <div class="header-actions">
       <button onclick="newChat()" title="Новый чат">🌙＋</button>
       <button onclick="openSettings()" title="Настройки">⚙️</button>
-      <button onclick="loadModels()" title="Обновить список">🔄</button>
+      <button onclick="loadModels()" title="Обновить список"></button>
       <button onclick="openHistory()" title="История">📋</button>
       <button onclick="exportHistory()" title="Экспорт">⬇️</button>
       <button onclick="clearHistory()" title="Очистить">🗑</button>
@@ -374,8 +366,8 @@
   </div>
 
   <div class="filter-toggles">
-    <label><input type="checkbox" id="freeOnly" checked>  Только бесплатные</label>
-    <label><input type="checkbox" id="hidePreview">  Скрыть Preview</label>
+    <label><input type="checkbox" id="freeOnly" checked> 🆓 Только бесплатные</label>
+    <label><input type="checkbox" id="hidePreview"> 🙈 Скрыть Preview</label>
     <label><input type="checkbox" id="sortBySpeed" checked> 🏆 Сначала лучшие</label>
   </div>
 
@@ -397,6 +389,12 @@
     <input type="text" id="messageInput" placeholder="Введите сообщение..." disabled>
     <button id="sendBtn" disabled>Отправить</button>
   </div>
+  <div class="quick-prompts">
+    <button onclick="usePrompt('🔬 Квантовая запутанность')">🔬 Квантовая запутанность</button>
+    <button onclick="usePrompt('🌧 Стих про дождь')">🌧 Стих про дождь</button>
+    <button onclick="usePrompt('🐍 Python за 30 дней')"> Python за 30 дней</button>
+    <button onclick="usePrompt('🧠 Что такое RAG')">🧠 Что такое RAG</button>
+  </div>
 </div>
 
 <!-- Модалка настроек -->
@@ -415,10 +413,23 @@
 <!-- Модалка истории -->
 <div class="modal-overlay" id="historyModal">
   <div class="modal">
-    <h2>📋 История чатов</h2>
+    <h2> История чатов</h2>
     <div id="historyList"></div>
     <div class="modal-buttons">
       <button class="btn-secondary" onclick="closeModal('historyModal')">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка импорта -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <h2>⬆️ Импорт истории</h2>
+    <label>Вставьте JSON:</label>
+    <textarea id="importData"></textarea>
+    <div class="modal-buttons">
+      <button class="btn-secondary" onclick="closeModal('importModal')">Отмена</button>
+      <button class="btn-primary" onclick="doImport()">Импортировать</button>
     </div>
   </div>
 </div>
@@ -471,10 +482,10 @@ async function loadModels() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     allModels = data.models || [];
-    countEl.textContent = `✅ Загружено: ${allModels.length} моделей`;
+    countEl.textContent = '✅ Загружено: ' + allModels.length + ' моделей';
     renderModels();
   } catch (e) {
-    countEl.textContent = '❌ Ошибка: ' + e.message;
+    countEl.textContent = ' Ошибка: ' + e.message;
     console.error(e);
   }
 }
@@ -485,37 +496,34 @@ function classifyModel(m) {
   const id = (m.id || '').toLowerCase();
   const badges = [];
   let priority = 50;
-  let category = 'other';
+  let isFast = false;
+  let isPower = false;
+  let isPreview = false;
 
-  // Провайдер
   if (m.provider === 'gemini') {
     badges.push({ class: 'badge-gemini', text: 'GEMINI' });
     priority += 100;
-    category = 'gemini';
 
-    // Версия
     const ver = id.match(/gemini-(\d+)\.(\d+)/);
     if (ver) {
       const major = parseInt(ver[1]);
       const minor = parseInt(ver[2]);
       priority += major * 10 + minor;
-
       if (major >= 3) priority += 20;
       else if (major >= 2 && minor >= 5) priority += 15;
     }
 
-    // Тип
     if (/pro|ultra/i.test(label)) {
       badges.push({ class: 'badge-pro', text: '💰 PRO' });
-      category = 'paid';
+      isPower = true;
       priority += 5;
     } else if (/flash-lite|lite.*flash/i.test(label)) {
       badges.push({ class: 'badge-lite', text: '⚡ LITE' });
-      category = 'fast';
+      isFast = true;
       priority += 30;
     } else if (/flash/i.test(label)) {
       badges.push({ class: 'badge-fast', text: '⚡ FAST' });
-      category = 'fast';
+      isFast = true;
       priority += 25;
     } else {
       badges.push({ class: 'badge-lite', text: '📦 STD' });
@@ -523,6 +531,7 @@ function classifyModel(m) {
 
     if (/preview|experimental/i.test(label)) {
       badges.push({ class: 'badge-preview', text: '🔬 PREVIEW' });
+      isPreview = true;
       priority -= 10;
     }
     if (/latest/i.test(label)) {
@@ -535,17 +544,16 @@ function classifyModel(m) {
     priority += 90;
 
     if (/llama-4|maverick/i.test(label)) {
-      badges.push({ class: 'badge-70b', text: ' LLAMA 4' });
+      badges.push({ class: 'badge-70b', text: '🦙 LLAMA 4' });
       priority += 40;
-      category = 'power';
+      isPower = true;
     } else if (/llama-3\.3/i.test(label)) {
       badges.push({ class: 'badge-70b', text: '🦙 LLAMA 3.3' });
       priority += 35;
-      category = 'power';
+      isPower = true;
     } else if (/llama-3\.1/i.test(label)) {
       badges.push({ class: 'badge-70b', text: '🦙 LLAMA 3.1' });
       priority += 30;
-      category = 'stable';
     } else if (/llama/i.test(label)) {
       badges.push({ class: 'badge-lite', text: '🦙 Llama' });
       priority += 20;
@@ -554,6 +562,7 @@ function classifyModel(m) {
     if (/70b|120b/i.test(label)) {
       badges.push({ class: 'badge-70b', text: '⭐ 70B+' });
       priority += 15;
+      isPower = true;
     } else if (/32b/i.test(label)) {
       badges.push({ class: 'badge-70b', text: '⭐ 32B' });
       priority += 10;
@@ -564,6 +573,7 @@ function classifyModel(m) {
     if (/deepseek|r1/i.test(label)) {
       badges.push({ class: 'badge-pro', text: '🎯 REASONING' });
       priority += 20;
+      isPower = true;
     }
     if (/qwen/i.test(label)) {
       badges.push({ class: 'badge-pro', text: '💎 QWEN' });
@@ -582,10 +592,10 @@ function classifyModel(m) {
     badges.push({ class: 'badge-paid', text: '💰 PAID' });
     priority -= 50;
   } else {
-    badges.push({ class: 'badge-free', text: ' FREE' });
+    badges.push({ class: 'badge-free', text: '🆓 FREE' });
   }
 
-  return { badges, priority, category };
+  return { badges, priority, isFast, isPower, isPreview };
 }
 
 // === РЕНДЕР МОДЕЛЕЙ ===
@@ -597,59 +607,45 @@ function renderModels() {
   const hidePreview = document.getElementById('hidePreview').checked;
   const sortBySpeed = document.getElementById('sortBySpeed').checked;
 
-  // Обогащаем модели классификацией
   const enriched = allModels.map(m => {
     const cls = classifyModel(m);
     return { ...m, ...cls };
   });
 
-  // Фильтрация
   let filtered = enriched.filter(m => {
     if (search && !m.label.toLowerCase().includes(search) && !m.id.toLowerCase().includes(search)) return false;
     if (provider !== 'all' && m.provider !== provider) return false;
     if (freeOnly && m.paidOnly) return false;
-    if (hidePreview && /preview|experimental/i.test(m.label)) return false;
+    if (hidePreview && m.isPreview) return false;
 
-    if (type === 'fast' && m.category !== 'fast') return false;
-    if (type === 'power' && m.category !== 'power' && m.category !== 'paid') return false;
-    if (type === 'preview' && !/preview|experimental/i.test(m.label)) return false;
+    // ИСПРАВЛЕННАЯ ФИЛЬТРАЦИЯ ПО ТИПУ
+    if (type === 'fast' && !m.isFast) return false;
+    if (type === 'power' && !m.isPower) return false;
+    if (type === 'preview' && !m.isPreview) return false;
 
     return true;
   });
 
-  // Сортировка
   if (sortBySpeed) {
     filtered.sort((a, b) => b.priority - a.priority);
   } else {
     filtered.sort((a, b) => a.label.localeCompare(b.label));
   }
 
-  // Группировка
   const groups = {};
-  const groupOrder = ['gemini', 'groq', 'openai', 'other'];
-  const groupNames = {
-    'gemini': '🔮 Google Gemini',
-    'groq': '⚡ Groq',
-    'openai': '🟢 OpenAI',
-    'other': '🤖 Другие',
-    'fast': '⚡ Быстрые',
-    'power': '⭐ Мощные',
-    'paid': '💰 Платные',
-    'stable': '📦 Стабильные',
-  };
+  const groupOrder = ['🔮 Google Gemini', '⚡ Groq', ' OpenAI', '🤖 Другие'];
+  const groupNames = { 'gemini': ' Google Gemini', 'groq': '⚡ Groq', 'openai': '🟢 OpenAI' };
 
   filtered.forEach(m => {
-    const g = groupNames[m.category] || '🤖 Другие';
+    const g = groupNames[m.provider] || ' Другие';
     if (!groups[g]) groups[g] = [];
     groups[g].push(m);
   });
 
-  // Рендер
   const container = document.getElementById('modelsList');
   container.innerHTML = '';
 
-  groupOrder.forEach(gKey => {
-    const gName = groupNames[gKey];
+  groupOrder.forEach(gName => {
     if (!groups[gName]) return;
     const models = groups[gName];
 
@@ -658,13 +654,12 @@ function renderModels() {
 
     const title = document.createElement('div');
     title.className = 'group-title';
-    title.textContent = `${gName} (${models.length})`;
+    title.textContent = gName + ' (' + models.length + ')';
     groupDiv.appendChild(title);
 
     models.forEach(m => {
       const item = document.createElement('div');
-      item.className = 'model-item' + (m.paidOnly ? ' disabled' : '') +
-                       (selectedModel === m.id ? ' selected' : '');
+      item.className = 'model-item' + (m.paidOnly ? ' disabled' : '') + (selectedModel === m.id ? ' selected' : '');
 
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
@@ -707,8 +702,7 @@ function renderModels() {
     container.appendChild(groupDiv);
   });
 
-  document.getElementById('modelCount').textContent =
-    `Показано: ${filtered.length} из ${allModels.length}`;
+  document.getElementById('modelCount').textContent = 'Показано: ' + filtered.length + ' из ' + allModels.length;
 }
 
 // === ВЫБОР МОДЕЛИ ===
@@ -723,7 +717,6 @@ function selectModel(id) {
   document.getElementById('messageInput').focus();
   renderModels();
 
-  // Создаём новый чат если нужно
   if (!currentChatId) newChat();
 }
 
@@ -735,7 +728,6 @@ async function sendMessage() {
 
   const messagesDiv = document.getElementById('chatMessages');
 
-  // Сообщение пользователя
   const userMsg = document.createElement('div');
   userMsg.className = 'message user';
   userMsg.textContent = message;
@@ -744,17 +736,16 @@ async function sendMessage() {
   input.value = '';
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-  // Блокируем ввод
   input.disabled = true;
   document.getElementById('sendBtn').disabled = true;
   document.getElementById('sendBtn').textContent = '⏳';
 
-  // Добавляем в историю
   if (!currentChatId) newChat();
   const chat = chatHistory.find(c => c.id === currentChatId);
   if (chat) {
     chat.messages.push({ role: 'user', content: message, time: Date.now() });
     chat.model = selectedModel;
+    chat.title = chat.title === 'Новый чат' ? message.slice(0, 40) : chat.title;
     saveHistory();
   }
 
@@ -795,6 +786,11 @@ async function sendMessage() {
   document.getElementById('sendBtn').disabled = false;
   document.getElementById('sendBtn').textContent = 'Отправить';
   input.focus();
+}
+
+function usePrompt(text) {
+  document.getElementById('messageInput').value = text;
+  document.getElementById('messageInput').focus();
 }
 
 // === НОВЫЙ ЧАТ ===
@@ -844,8 +840,10 @@ function openHistory() {
       item.className = 'history-item';
 
       const info = document.createElement('div');
-      info.innerHTML = `<strong>${escapeHtml(chat.title)}</strong><br>
-        <small style="color:#888">${chat.model} • ${chat.messages.length} сообщ. • ${new Date(chat.created).toLocaleString()}</small>`;
+      info.style.flex = '1';
+      info.style.cursor = 'pointer';
+      info.innerHTML = '<strong>' + escapeHtml(chat.title) + '</strong><br>' +
+        '<small style="color:#888">' + chat.model + ' • ' + chat.messages.length + ' сообщ. • ' + new Date(chat.created).toLocaleString() + '</small>';
       info.onclick = () => loadChat(chat.id);
 
       const delBtn = document.createElement('button');
@@ -914,9 +912,25 @@ function exportHistory() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'chat-history-' + new Date().toISOString().slice(0,10) + '.json';
+  a.download = 'chat-history-' + new Date().toISOString().slice(0, 10) + '.json';
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function doImport() {
+  try {
+    const data = JSON.parse(document.getElementById('importData').value);
+    if (Array.isArray(data)) {
+      chatHistory = data.concat(chatHistory);
+      saveHistory();
+      closeModal('importModal');
+      alert('Импортировано: ' + data.length + ' чатов');
+    } else {
+      alert('Неверный формат JSON');
+    }
+  } catch (e) {
+    alert('Ошибка парсинга: ' + e.message);
+  }
 }
 
 // === НАСТРОЙКИ ===
@@ -946,7 +960,6 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// Закрытие модалок по клику на оверлей
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) overlay.classList.remove('active');
