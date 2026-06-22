@@ -2,261 +2,308 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>AI Control Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini Workspace Hub</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     :root {
-      --bg-main: #0f172a; /* slate-900 */
-      --bg-sec: #1e293b; /* slate-800 */
-      --bg-third: #334155; /* slate-700 */
-      --text-main: #f8fafc; /* slate-50 */
-      --text-sec: #94a3b8; /* slate-400 */
-      --border-color: #334155; 
-      --code-bg: #1e293b;
+      --bg-main: #131314;     /* Оригинальный темный фон Gemini */
+      --bg-sidebar: #1e1f20;  /* Фон сайдбара */
+      --bg-card: #282a2c;     /* Фон элементов ввода */
+      --text-main: #e3e3e3;
+      --text-sec: #c4c7c5;
+      --border-color: #444746;
+      --code-bg: #1e1f20;
+      --user-msg-bg: #2b2a33;
     }
     
     body.light-theme {
-      --bg-main: #f1f5f9; /* slate-100 */
-      --bg-sec: #ffffff; 
-      --bg-third: #e2e8f0; /* slate-200 */
-      --text-main: #0f172a; 
-      --text-sec: #64748b; 
-      --border-color: #cbd5e1; 
-      --code-bg: #e2e8f0;
+      --bg-main: #f0f4f9; 
+      --bg-sidebar: #f8fafd;
+      --bg-card: #ffffff;
+      --text-main: #1f1f1f;
+      --text-sec: #474747;
+      --border-color: #c4c7c5;
+      --code-bg: #e9eef6;
+      --user-msg-bg: #e3e3e3;
     }
 
-    body { background-color: var(--bg-main); color: var(--text-main); transition: background-color 0.2s, color 0.2s; }
-    .theme-bg-sec { background-color: var(--bg-sec); border-color: var(--border-color); }
-    .theme-bg-third { background-color: var(--bg-third); border-color: var(--border-color); color: var(--text-main); }
+    body { background-color: var(--bg-main); color: var(--text-main); transition: all 0.2s ease; }
+    .theme-sidebar { background-color: var(--bg-sidebar); border-color: var(--border-color); }
+    .theme-card { background-color: var(--bg-card); border-color: var(--border-color); }
     .theme-text-sec { color: var(--text-sec); }
     .theme-border { border-color: var(--border-color); }
 
-    .chat-container { height: calc(100vh - 220px); }
-    .markdown-body pre { background: var(--code-bg); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0; border: 1px solid var(--border-color); }
-    .markdown-body code { font-family: monospace; background: rgba(148, 163, 184, 0.2); padding: 0.2rem 0.4rem; border-radius: 0.25rem; color: #f43f5e; }
+    /* Скрытие скроллбара сайдбара */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .chat-stream { height: calc(100vh - 140px); }
+    .markdown-body pre { background: var(--code-bg); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 0.5rem 0; border: 1px solid var(--border-color); }
+    .markdown-body code { font-family: monospace; background: rgba(148, 163, 184, 0.15); padding: 0.2rem 0.4rem; border-radius: 0.25rem; color: #ff6b6b; }
+    body.light-theme .markdown-body code { color: #d946ef; }
     .markdown-body pre code { color: inherit; background: transparent; padding: 0; }
     
-    #settingsModal { display: none; }
-    #settingsModal.active { display: flex; }
+    .badge { font-size: 0.65rem; font-weight: 600; padding: 0.1rem 0.4rem; border-radius: 0.25rem; }
     
-    .badge { display: inline-flex; items-center: center; gap: 0.25rem; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 0.375rem; }
+    /* Состояния сайдбара для мобилок */
+    @media (max-width: 768px) {
+      .sidebar-mobile { transform: translateX(-100%); transition: transform 0.2s ease-in-out; }
+      .sidebar-mobile.active { transform: translateX(0); }
+    }
   </style>
 </head>
-<body class="font-sans antialiased">
+<body class="font-sans antialiased flex h-screen overflow-hidden">
 
-  <header class="theme-bg-sec border-b theme-border p-4 sticky top-0 z-50 shadow-lg">
-    <div class="max-w-7xl mx-auto flex flex-col gap-3">
-      
-      <div class="flex items-center justify-between flex-wrap gap-4">
-        <h1 class="text-lg font-bold tracking-wider text-blue-500 flex items-center gap-2">🤖 AI DISPATCHER <span class="text-xs theme-text-sec font-mono">v3.0</span></h1>
-        
-        <div class="flex items-center flex-wrap gap-4">
-          <div class="flex flex-col min-w-[240px]">
-            <span class="text-xs theme-text-sec font-bold mb-1">Модель 1 (Основная)</span>
-            <select id="modelSelect1" class="theme-bg-third text-sm rounded-lg p-2 border focus:outline-none focus:border-blue-500 w-full font-mono text-xs"></select>
-            <div id="capabilities1" class="flex gap-1 mt-1 flex-wrap min-h-[18px]"></div>
-          </div>
+  <aside id="sidebar" class="sidebar-mobile fixed inset-y-0 left-0 w-68 theme-sidebar border-r z-40 flex flex-col md:relative md:transform-none shadow-xl">
+    <div class="p-4">
+      <button id="newChatBtn" class="w-full flex items-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-sm font-medium transition shadow-sm">
+        <span>svg+</span> ➕ Новый чат
+      </button>
+    </div>
 
-          <label class="flex items-center gap-2 theme-bg-third px-3 py-2 rounded-lg cursor-pointer hover:opacity-90 transition shadow-sm h-9 mt-4">
-            <input type="checkbox" id="compareMode" class="form-checkbox text-blue-500 rounded">
-            <span class="text-xs font-bold tracking-wide">🌓 СРАВНЕНИЕ</span>
-          </label>
+    <div class="px-4 mb-2">
+      <span class="text-xs theme-text-sec font-bold block mb-1.5 uppercase tracking-wider px-1">Фильтр моделей:</span>
+      <div class="grid grid-cols-2 gap-1 text-center">
+        <button class="filter-chip bg-blue-600 text-white text-xs py-1.5 rounded-lg font-medium transition" data-filter="all">Все</button>
+        <button class="filter-chip theme-card text-xs py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-700 transition" data-filter="files">📁 Файлы</button>
+        <button class="filter-chip theme-card text-xs py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-700 transition" data-filter="speed">⚡ Быстрые</button>
+        <button class="filter-chip theme-card text-xs py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-700 transition" data-filter="power">🧠 Мощные</button>
+      </div>
+    </div>
 
-          <div id="model2Wrapper" class="flex flex-col min-w-[240px] hidden">
-            <span class="text-xs theme-text-sec font-bold mb-1">Модель 2</span>
-            <select id="modelSelect2" class="theme-bg-third text-sm rounded-lg p-2 border focus:outline-none focus:border-green-500 w-full font-mono text-xs"></select>
-            <div id="capabilities2" class="flex gap-1 mt-1 flex-wrap min-h-[18px]"></div>
-          </div>
+    <div class="flex-1 overflow-y-auto no-scrollbar px-2 space-y-1" id="chatSessionsContainer">
+      </div>
 
-          <button id="settingsBtn" class="theme-bg-third p-2 rounded-lg hover:opacity-90 transition mt-4 border theme-border h-9 w-9 flex items-center justify-center shadow-sm" title="Управление">
-            ⚙️
-          </button>
+    <div class="p-4 border-t theme-border space-y-2 text-xs font-medium">
+      <button id="themeToggleBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-700 hover:text-white transition">
+        🌗 Сменить тему оформления
+      </button>
+      <button id="exportChatBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-700 hover:text-white transition">
+        💾 Экспорт диалога (.md)
+      </button>
+      <button id="clearAllBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-400 hover:bg-red-900/30 transition">
+        🗑️ Очистить всю историю
+      </button>
+    </div>
+  </aside>
+
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+
+  <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+    
+    <header class="theme-card border-b theme-border p-3 flex items-center justify-between gap-4 shadow-sm z-10">
+      <div class="flex items-center gap-3">
+        <button id="burgerBtn" class="md:hidden p-2 rounded-lg hover:bg-gray-700 transition focus:outline-none">
+          ☰
+        </button>
+        <h1 class="text-md font-bold tracking-tight hidden sm:block">Workspace <span class="text-blue-500 font-mono text-xs">v4.0</span></h1>
+      </div>
+
+      <div class="flex items-center gap-3 max-w-full overflow-x-auto no-scrollbar">
+        <div class="flex flex-col">
+          <select id="modelSelect1" class="theme-card text-xs rounded-xl p-2 border focus:outline-none focus:border-blue-500 font-mono w-44 sm:w-56"></select>
+          <div id="capabilities1" class="flex gap-1 mt-1 min-h-[14px]"></div>
+        </div>
+
+        <label class="flex items-center gap-1.5 theme-card px-2.5 py-1.5 rounded-xl cursor-pointer hover:opacity-90 transition border theme-border text-xs font-bold shrink-0">
+          <input type="checkbox" id="compareMode" class="form-checkbox text-blue-500 rounded scale-90">
+          <span>Сравнение</span>
+        </label>
+
+        <div id="model2Wrapper" class="flex flex-col hidden">
+          <select id="modelSelect2" class="theme-card text-xs rounded-xl p-2 border focus:outline-none focus:border-green-500 font-mono w-44 sm:w-56"></select>
+          <div id="capabilities2" class="flex gap-1 mt-1 min-h-[14px]"></div>
         </div>
       </div>
+    </header>
 
-      <div class="flex flex-wrap items-center gap-2 pt-2 border-t theme-border">
-        <span class="text-xs theme-text-sec font-bold mr-2">Фильтры спецификации:</span>
-        <button class="filter-chip bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-medium" data-filter="all">Все матрицы</button>
-        <button class="filter-chip theme-bg-third text-xs px-3 py-1 rounded-full font-medium border theme-border hover:bg-blue-500 hover:text-white transition" data-filter="files">📁 Работа с файлами/фото (Gemini)</button>
-        <button class="filter-chip theme-bg-third text-xs px-3 py-1 rounded-full font-medium border theme-border hover:bg-blue-500 hover:text-white transition" data-filter="text">✍️ Только Текст (Groq)</button>
-        <button class="filter-chip theme-bg-third text-xs px-3 py-1 rounded-full font-medium border theme-border hover:bg-blue-500 hover:text-white transition" data-filter="speed">⚡ Высокая скорость (Flash/3B/8B)</button>
-        <button class="filter-chip theme-bg-third text-xs px-3 py-1 rounded-full font-medium border theme-border hover:bg-blue-500 hover:text-white transition" data-filter="power">🧠 Высшая логика (Pro/70B+)</button>
-        
-        <input type="text" id="modelSearch" placeholder="Поиск по названию..." class="ml-auto theme-bg-third text-xs px-3 py-1 rounded-lg border theme-border focus:outline-none focus:border-blue-500 w-48">
-      </div>
-
+    <div id="chatWindow" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 chat-stream">
+      <div id="layoutWrapper" class="max-w-3xl mx-auto w-full space-y-6">
+        </div>
     </div>
-  </header>
 
-  <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 items-center justify-center backdrop-blur-xs">
-    <div class="theme-bg-sec p-6 rounded-xl shadow-2xl w-96 border theme-border animate-fade-in">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-md font-bold tracking-wider">СЕРВИСНЫЕ ИНСТРУМЕНТЫ</h2>
-        <button id="closeSettings" class="text-red-400 font-bold text-xl hover:text-red-500 transition">&times;</button>
-      </div>
-      <div class="space-y-3">
-        <button id="refreshModelsBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm py-2.5 rounded-lg font-bold transition shadow">
-          🔄 Обновить конфигурацию моделей
-        </button>
-        <button id="exportChatBtn" class="w-full bg-green-600 hover:bg-green-500 text-white text-sm py-2.5 rounded-lg font-bold transition shadow">
-          💾 Экспорт сессии (Markdown)
-        </button>
-        <button id="themeToggleBtn" class="w-full theme-bg-third text-sm py-2.5 rounded-lg font-bold transition border theme-border shadow-sm">
-          🌗 Смена цветовой схемы интерфейса
-        </button>
-        <button id="clearHistoryBtn" class="w-full bg-red-700 hover:bg-red-600 text-white text-sm py-2.5 rounded-lg font-bold transition shadow">
-          🗑️ Очистить энергонезависимую историю
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <main class="max-w-7xl mx-auto p-4">
-    <div id="chatWindow" class="chat-container overflow-y-auto space-y-4 pr-2 flex gap-4 items-start">
-      <div id="singleTrack" class="w-full space-y-4"></div>
-      <div id="compareTrack1" class="w-1/2 space-y-4 hidden border-r theme-border pr-4"></div>
-      <div id="compareTrack2" class="w-1/2 space-y-4 hidden pl-2"></div>
-    </div>
-  </main>
-
-  <footer class="fixed bottom-0 left-0 w-full theme-bg-sec border-t theme-border p-4 shadow-inner">
-    <div class="max-w-4xl mx-auto">
-      <div id="filePreviewContainer" class="flex flex-wrap gap-2 mb-2"></div>
-      <div class="flex items-center gap-2">
-        <label class="theme-bg-third hover:opacity-90 p-3 rounded-xl cursor-pointer transition flex items-center justify-center shadow-sm border theme-border" title="Добавить файл (Только для систем Gemini)">
+    <div class="p-4 w-full max-w-3xl mx-auto sticky bottom-0 bg-transparent">
+      <div id="filePreviewContainer" class="flex flex-wrap gap-2 mb-2 px-2"></div>
+      
+      <div class="theme-card border theme-border rounded-3xl p-2 flex items-end gap-2 shadow-xl relative backdrop-blur-md">
+        <label class="p-3 rounded-full hover:bg-gray-500/20 cursor-pointer transition flex items-center justify-center text-blue-400 shrink-0" title="Прикрепить схемы/логи (Только Gemini)">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
           </svg>
           <input type="file" id="fileInput" class="hidden" multiple>
         </label>
-        <textarea id="promptInput" rows="1" class="flex-1 theme-bg-third rounded-xl p-3 border focus:outline-none focus:border-blue-500 resize-none text-sm shadow-sm" placeholder="Введите команду или запрос... (Файлы/Изображения обрабатываются только веткой Gemini)"></textarea>
-        <button id="sendBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-5 py-3 rounded-xl transition shadow-md text-sm tracking-wide">
-          ОТПРАВИТЬ
+
+        <textarea id="promptInput" rows="1" class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm p-2.5 resize-none overflow-y-auto max-h-40" placeholder="Введите запрос к ИИ..."></textarea>
+        
+        <button id="sendBtn" class="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full transition flex items-center justify-center shadow-md shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l92 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
         </button>
       </div>
     </div>
-  </footer>
+
+  </main>
 
   <script>
-    // Жестко зашитый рабочий URL прокси-сервера
     const WORKER_URL = 'https://chat-ai-proxy.zenitogk.workers.dev';
 
+    // Структура данных многосессионного хранилища
+    let chats = JSON.parse(localStorage.getItem('gemini_hub_chats')) || {};
+    let currentChatId = localStorage.getItem('gemini_hub_current_id') || '';
+    
     let attachedFiles = [];
-    // Энергонезависимая история — выгружаем из локального хранилища браузера
-    let chatHistory = JSON.parse(localStorage.getItem('ai_sys_history')) || [];
-    let allModelsData = []; 
+    let allModelsData = [];
     let currentFilter = 'all';
+    let activeLoaders = {}; // Стейт активных запросов во избежание сбоев отрисовки
 
-    // Элементы управления
+    // Элементы UI
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const burgerBtn = document.getElementById('burgerBtn');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const chatSessionsContainer = document.getElementById('chatSessionsContainer');
+    
     const compareModeCheck = document.getElementById('compareMode');
     const model2Wrapper = document.getElementById('model2Wrapper');
-    const singleTrack = document.getElementById('singleTrack');
-    const compareTrack1 = document.getElementById('compareTrack1');
-    const compareTrack2 = document.getElementById('compareTrack2');
+    const layoutWrapper = document.getElementById('layoutWrapper');
     const modelSelect1 = document.getElementById('modelSelect1');
     const modelSelect2 = document.getElementById('modelSelect2');
     const capabilities1 = document.getElementById('capabilities1');
     const capabilities2 = document.getElementById('capabilities2');
+    
     const fileInput = document.getElementById('fileInput');
     const filePreviewContainer = document.getElementById('filePreviewContainer');
     const promptInput = document.getElementById('promptInput');
     const sendBtn = document.getElementById('sendBtn');
     const chatWindow = document.getElementById('chatWindow');
-    const modelSearch = document.getElementById('modelSearch');
 
-    // Настройки
-    const settingsBtn = document.getElementById('settingsBtn');
-    const settingsModal = document.getElementById('settingsModal');
-    const closeSettings = document.getElementById('closeSettings');
     const themeToggleBtn = document.getElementById('themeToggleBtn');
     const exportChatBtn = document.getElementById('exportChatBtn');
-    const refreshModelsBtn = document.getElementById('refreshModelsBtn');
-    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
 
-    // --- Управление сессией окон настроек ---
-    settingsBtn.onclick = () => settingsModal.classList.add('active');
-    closeSettings.onclick = () => settingsModal.classList.remove('active');
-    window.onclick = (e) => { if(e.target === settingsModal) settingsModal.classList.remove('active'); };
+    // --- Логика Управления Сайдбаром (Мобильная адаптация) ---
+    burgerBtn.onclick = () => { sidebar.classList.add('active'); sidebarOverlay.classList.remove('hidden'); };
+    sidebarOverlay.onclick = () => { sidebar.classList.remove('active'); sidebarOverlay.classList.add('hidden'); };
 
+    // --- Настройки сессий ---
     themeToggleBtn.onclick = () => {
       document.body.classList.toggle('light-theme');
-      localStorage.setItem('ai_theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+      localStorage.setItem('gemini_hub_theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
     };
-    if(localStorage.getItem('ai_theme') === 'light') document.body.classList.add('light-theme');
+    if(localStorage.getItem('gemini_hub_theme') === 'light') document.body.classList.add('light-theme');
 
-    clearHistoryBtn.onclick = () => {
-      if(confirm('Уничтожить все сохраненные логи текущей сессии?')) {
-        chatHistory = [];
-        localStorage.removeItem('ai_sys_history');
-        renderChatFromHistory();
-        settingsModal.classList.remove('active');
+    newChatBtn.onclick = () => { createNewSession(); };
+
+    clearAllBtn.onclick = () => {
+      if(confirm('Удалить все чаты безвозвратно?')) {
+        chats = {}; currentChatId = '';
+        saveState(); createNewSession();
       }
     };
 
     exportChatBtn.onclick = () => {
-      if (chatHistory.length === 0) return alert('Лог-файл пуст.');
-      let mdContent = "# Мониторинг AI Сессии\n\n";
-      chatHistory.forEach(msg => {
-        const role = msg.role === 'user' ? '👤 **USER**' : `🤖 **AI (${msg.modelId || 'Система'})**`;
-        mdContent += `${role}:\n${msg.content}\n\n---\n\n`;
+      const activeHistory = chats[currentChatId]?.history || [];
+      if (!activeHistory.length) return alert('История текущего чата пуста.');
+      let md = `# Экспорт сессии чата\n\n`;
+      activeHistory.forEach(msg => {
+        md += `### ${msg.role === 'user' ? 'Вы' : `ИИ (${msg.modelId})`}:\n${msg.content}\n\n`;
       });
-      const blob = new Blob([mdContent], { type: 'text/markdown' });
+      const blob = new Blob([md], { type: 'text/markdown' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `ai_hub_report_${new Date().toISOString().slice(0,10)}.md`;
+      a.download = `chat_export_${currentChatId.slice(0,6)}.md`;
       a.click();
-      settingsModal.classList.remove('active');
     };
 
-    refreshModelsBtn.onclick = () => { loadModels(); settingsModal.classList.remove('active'); };
+    // --- Работа с сессиями чатов ---
+    function createNewSession() {
+      const id = 'chat_' + Date.now();
+      chats[id] = { title: 'Новый диалог', history: [] };
+      currentChatId = id;
+      saveState();
+      renderSidebarSessions();
+      renderActiveChat();
+      if(window.innerWidth < 768) { sidebar.classList.remove('active'); sidebarOverlay.classList.add('hidden'); }
+    }
 
-    // --- Автоматический анализатор архитектуры и возможностей ТУ моделей ---
+    function saveState() {
+      localStorage.setItem('gemini_hub_chats', JSON.stringify(chats));
+      localStorage.setItem('gemini_hub_current_id', currentChatId);
+    }
+
+    function renderSidebarSessions() {
+      chatSessionsContainer.innerHTML = '';
+      Object.keys(chats).sort((a,b) => b.split('_')[1] - a.split('_')[1]).forEach(id => {
+        const isSelected = id === currentChatId;
+        const activeClass = isSelected ? 'bg-blue-600/20 text-blue-400 font-medium' : 'hover:bg-gray-500/10';
+        
+        const div = document.createElement('div');
+        div.className = `flex items-center justify-between px-3 py-2.5 mx-2 rounded-xl text-sm cursor-pointer transition ${activeClass}`;
+        div.innerHTML = `
+          <div class="truncate flex-1 pr-2" onclick="switchSession('${id}')">💬 ${chats[id].title}</div>
+          <button onclick="deleteSession('${id}', event)" class="opacity-40 hover:opacity-100 text-red-400 text-xs px-1">✕</button>
+        `;
+        chatSessionsContainer.appendChild(div);
+      });
+    }
+
+    window.switchSession = function(id) {
+      currentChatId = id;
+      saveState();
+      renderSidebarSessions();
+      renderActiveChat();
+      if(window.innerWidth < 768) { sidebar.classList.remove('active'); sidebarOverlay.classList.add('hidden'); }
+    }
+
+    window.deleteSession = function(id, event) {
+      event.stopPropagation();
+      delete chats[id];
+      if(currentChatId === id) {
+        const keys = Object.keys(chats);
+        currentChatId = keys.length ? keys[0] : '';
+      }
+      saveState();
+      if(!currentChatId) createNewSession();
+      else { renderSidebarSessions(); renderActiveChat(); }
+    }
+
+    // --- Матрица анализа возможностей ---
     function evaluateCapabilities(modelId) {
       const id = modelId.toLowerCase();
       const isGemini = id.includes('gemini');
       return {
         files: isGemini,
-        images: isGemini,
-        text: true,
         speed: id.includes('flash') || id.includes('8b') || id.includes('3b') || id.includes('mini'),
-        power: id.includes('pro') || id.includes('70b') || id.includes('72b') || id.includes('large') || id.includes('r1')
+        power: id.includes('pro') || id.includes('70b') || id.includes('72b') || id.includes('r1') || id.includes('large')
       };
     }
 
     function drawCapabilitiesBadges(modelId, targetContainer) {
-      targetContainer.innerHTML = '';
-      if(!modelId) return;
+      targetContainer.innerHTML = ''; if(!modelId) return;
       const caps = evaluateCapabilities(modelId);
-      
-      if(caps.files) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-purple-600 text-white">📁 Файлы</span>');
-      if(caps.images) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-pink-600 text-white">🖼️ Фото</span>');
-      if(caps.text && !caps.files) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-gray-600 text-white">✍️ Только Текст</span>');
-      if(caps.speed) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-amber-500 text-gray-900">⚡ Быстрая</span>');
-      if(caps.power) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-red-600 text-white">🧠 Мощная</span>');
+      if(caps.files) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-purple-600 text-white">📁 Мультимодальный</span>');
+      else targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-gray-600 text-gray-300">✍️ Только Текст</span>');
+      if(caps.speed) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-amber-500 text-gray-900">⚡ Fast</span>');
+      if(caps.power) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-red-600 text-white">🧠 High Logics</span>');
     }
 
-    // --- Интеллектуальный Фильтр Конфигураций ---
+    // --- Спецификация Фильтров ---
     async function loadModels() {
       try {
         const res = await fetch(`${WORKER_URL}/v1/models`);
         const data = await res.json();
         allModelsData = data.models || [];
         applyFiltering();
-      } catch (e) {
-        alert('Критический сбой считывания конфигурации моделей с прокси-сервера.');
-      }
+      } catch (e) { console.error('Ошибка считывания ТУ моделей с прокси.'); }
     }
 
     function applyFiltering() {
-      const searchStr = modelSearch.value.toLowerCase();
       const filtered = allModelsData.filter(m => {
-        const matchesSearch = m.id.toLowerCase().includes(searchStr) || (m.label && m.label.toLowerCase().includes(searchStr));
-        if(!matchesSearch) return false;
-        
         const caps = evaluateCapabilities(m.id);
         if(currentFilter === 'files') return caps.files;
-        if(currentFilter === 'text') return !caps.files;
         if(currentFilter === 'speed') return caps.speed;
         if(currentFilter === 'power') return caps.power;
         return true;
@@ -267,97 +314,108 @@
         select.innerHTML = '';
         filtered.forEach(m => {
           const opt = document.createElement('option');
-          opt.value = m.id;
-          opt.textContent = m.label || m.id;
+          opt.value = m.id; opt.textContent = m.label || m.id;
           select.appendChild(opt);
         });
-        if(currentSelected && filtered.find(m => m.id === currentSelected)) {
-          select.value = currentSelected;
-        } else if(idx === 1 && select.options.length > 1) {
-          select.selectedIndex = 1;
-        }
+        if(currentSelected && filtered.find(m => m.id === currentSelected)) select.value = currentSelected;
+        else if(idx === 1 && select.options.length > 1) select.selectedIndex = 1;
       });
 
       drawCapabilitiesBadges(modelSelect1.value, capabilities1);
       drawCapabilitiesBadges(modelSelect2.value, capabilities2);
     }
 
-    // Обработчики фильтров
     document.querySelectorAll('.filter-chip').forEach(chip => {
       chip.addEventListener('click', function() {
-        document.querySelectorAll('.filter-chip').forEach(c => {
-          c.className = 'filter-chip theme-bg-third text-xs px-3 py-1 rounded-full font-medium border theme-border hover:bg-blue-500 hover:text-white transition';
-        });
-        this.className = 'filter-chip bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-medium';
+        document.querySelectorAll('.filter-chip').forEach(c => c.className = 'filter-chip theme-card text-xs py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-700 transition');
+        this.className = 'filter-chip bg-blue-600 text-white text-xs py-1.5 rounded-lg font-medium';
         currentFilter = this.getAttribute('data-filter');
         applyFiltering();
       });
     });
 
-    modelSearch.addEventListener('input', applyFiltering);
-    modelSelect1.addEventListener('change', (e) => drawCapabilitiesBadges(e.target.value, capabilities1));
-    modelSelect2.addEventListener('change', (e) => drawCapabilitiesBadges(e.target.value, capabilities2));
+    modelSelect1.onchange = (e) => drawCapabilitiesBadges(e.target.value, capabilities1);
+    modelSelect2.onchange = (e) => drawCapabilitiesBadges(e.target.value, capabilities2);
+    compareModeCheck.onchange = () => { model2Wrapper.classList.toggle('hidden', !compareModeCheck.checked); renderActiveChat(); };
 
-    // --- Архитектура распределения истории сообщений ---
-    compareModeCheck.addEventListener('change', (e) => {
-      model2Wrapper.classList.toggle('hidden', !e.target.checked);
-      renderChatFromHistory();
-    });
-
-    function renderChatFromHistory() {
-      // Очищаем и заново инициализируем разметку треков
-      singleTrack.innerHTML = '';
-      compareTrack1.innerHTML = '<div class="text-center text-xs font-bold text-blue-500 tracking-wider uppercase border-b theme-border pb-2 mb-2">Модель 1 (Основная)</div>';
-      compareTrack2.innerHTML = '<div class="text-center text-xs font-bold text-green-500 tracking-wider uppercase border-b theme-border pb-2 mb-2">Модель 2 (Параллельная)</div>';
-      
+    // --- Интеллектуальный рендерер Архитектуры вывода ---
+    function renderActiveChat() {
+      layoutWrapper.innerHTML = '';
       const isCompare = compareModeCheck.checked;
-      singleTrack.classList.toggle('hidden', isCompare);
-      compareTrack1.classList.toggle('hidden', !isCompare);
-      compareTrack2.classList.toggle('hidden', !isCompare);
+      const history = chats[currentChatId]?.history || [];
 
-      chatHistory.forEach(msg => {
-        if(msg.role === 'user') {
-          const fileBadges = (msg.files || []).map(f => `<span class="text-xs text-blue-400 block font-mono mt-1">📎 Данные: ${f.name}</span>`).join('');
-          const html = `
-            <div class="flex justify-end mb-4 animate-fade-in">
-              <div class="rounded-2xl px-4 py-3 max-w-2xl shadow-md border" style="background-color: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.2);">
-                <div class="text-xs text-blue-400 font-bold mb-1">ОПЕРАТОР:</div>
-                <div class="whitespace-pre-wrap text-sm">${msg.content || '(Файл конфигурации)'}</div>
-                ${fileBadges}
-              </div>
-            </div>`;
-          if(isCompare) {
-            compareTrack1.insertAdjacentHTML('beforeend', html);
-            compareTrack2.insertAdjacentHTML('beforeend', html);
+      if (!isCompare) {
+        layoutWrapper.className = "max-w-3xl mx-auto w-full space-y-6";
+        history.forEach(msg => {
+          layoutWrapper.insertAdjacentHTML('beforeend', createMessageHtml(msg));
+        });
+        // Добавление лоадеров, если они запущены в стейте
+        if(activeLoaders['track1']) layoutWrapper.insertAdjacentHTML('beforeend', createLoaderHtml(activeLoaders['track1']));
+      } else {
+        // Режим Сравнения: Грид делит экран 50/50 на ПК и складывает вертикально на телефонах
+        layoutWrapper.className = "max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-start";
+        
+        const track1Col = document.createElement('div'); track1Col.className = "space-y-4 border-b md:border-b-0 md:border-r theme-border pb-6 md:pb-0 md:pr-4";
+        track1Col.innerHTML = `<div class="text-center text-xs font-bold text-blue-500 uppercase tracking-widest border-b theme-border pb-2 mb-2">Основная модель</div>`;
+        
+        const track2Col = document.createElement('div'); track2Col.className = "space-y-4 pt-4 md:pt-0 md:pl-2";
+        track2Col.innerHTML = `<div class="text-center text-xs font-bold text-green-500 uppercase tracking-widest border-b theme-border pb-2 mb-2">Параллельная модель</div>`;
+
+        history.forEach(msg => {
+          if (msg.role === 'user') {
+            const userHtml = createMessageHtml(msg);
+            track1Col.insertAdjacentHTML('beforeend', userHtml);
+            track2Col.insertAdjacentHTML('beforeend', userHtml);
           } else {
-            singleTrack.insertAdjacentHTML('beforeend', html);
+            if(msg.track === 'track2') track2Col.insertAdjacentHTML('beforeend', createMessageHtml(msg));
+            else track1Col.insertAdjacentHTML('beforeend', createMessageHtml(msg));
           }
-        } else {
-          // Вывод ответов вычислительных моделей
-          const isTrack2 = msg.track === 'track2';
-          const bColor = isTrack2 ? 'border-green-500' : 'border-blue-500';
-          const tColor = isTrack2 ? 'text-green-400' : 'text-blue-400';
-          
-          const html = `
-            <div class="flex justify-start mb-4 w-full">
-              <div class="theme-bg-sec border-l-4 ${bColor} rounded-xl px-4 py-3 w-full shadow-md markdown-body theme-border">
-                <div class="text-xs ${tColor} font-bold font-mono mb-1.5">${msg.modelId}:</div>
-                <div class="text-sm">${marked.parse(msg.content)}</div>
-              </div>
-            </div>`;
-            
-          if(isCompare) {
-            if(isTrack2) compareTrack2.insertAdjacentHTML('beforeend', html);
-            else compareTrack1.insertAdjacentHTML('beforeend', html);
-          } else {
-            singleTrack.insertAdjacentHTML('beforeend', html);
-          }
-        }
-      });
+        });
+
+        if(activeLoaders['track1']) track1Col.insertAdjacentHTML('beforeend', createLoaderHtml(activeLoaders['track1']));
+        if(activeLoaders['track2']) track2Col.insertAdjacentHTML('beforeend', createLoaderHtml(activeLoaders['track2']));
+
+        layoutWrapper.appendChild(track1Col);
+        layoutWrapper.appendChild(track2Col);
+      }
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    // --- Обработка ввода и отправка пакетов ---
+    function createMessageHtml(msg) {
+      if(msg.role === 'user') {
+        const fileBadges = (msg.files || []).map(f => `<span class="text-xs text-blue-400 block font-mono mt-1">📎 Данные файла: ${f.name}</span>`).join('');
+        return `
+          <div class="flex justify-end w-full">
+            <div class="rounded-2xl px-4 py-3 max-w-xl shadow-sm text-sm" style="background-color: var(--user-msg-bg);">
+              <div class="text-xs text-blue-400 font-bold mb-1">Вы:</div>
+              <div class="whitespace-pre-wrap">${msg.content || '(Вложение)'}</div>
+              ${fileBadges}
+            </div>
+          </div>`;
+      } else {
+        const isTrack2 = msg.track === 'track2';
+        const accentColor = isTrack2 ? 'text-green-400' : 'text-blue-400';
+        return `
+          <div class="flex justify-start w-full">
+            <div class="w-full max-w-full markdown-body">
+              <div class="text-xs ${accentColor} font-bold font-mono mb-1">${msg.modelId}:</div>
+              <div class="text-sm">${marked.parse(msg.content)}</div>
+            </div>
+          </div>`;
+      }
+    }
+
+    function createLoaderHtml(modelId) {
+      return `
+        <div class="flex justify-start w-full animate-pulse">
+          <div class="w-full theme-card rounded-2xl p-4 border theme-border">
+            <div class="text-xs theme-text-sec font-mono font-bold mb-1">${modelId}</div>
+            <div class="text-xs text-blue-400 flex items-center gap-2">🔄 Вычисление матрицы ответа...</div>
+          </div>
+        </div>`;
+    }
+
+    // --- Обработка ввода и отправки ---
     fileInput.addEventListener('change', async (e) => {
       for (let file of e.target.files) {
         const base64Data = await convertToBase64(file);
@@ -368,82 +426,63 @@
     });
 
     function convertToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
+      return new Promise((resolve) => {
+        const r = new FileReader(); r.readAsDataURL(file);
+        r.onload = () => resolve(r.result);
       });
     }
 
     function renderFilePreviews() {
       filePreviewContainer.innerHTML = '';
-      attachedFiles.forEach((file, index) => {
+      attachedFiles.forEach((f, idx) => {
         const div = document.createElement('div');
-        div.className = 'theme-bg-third text-xs px-3 py-1.5 rounded-lg flex items-center gap-2 border theme-border shadow-sm font-mono';
-        div.innerHTML = `<span class="truncate max-w-xs">📎 ${file.name}</span>
-                         <button onclick="removeFile(${index})" class="text-red-400 hover:text-red-500 font-bold ml-1">×</button>`;
+        div.className = 'theme-card text-xs px-3 py-1.5 rounded-full flex items-center gap-2 border theme-border font-mono';
+        div.innerHTML = `<span>📎 ${f.name}</span><button onclick="removeFile(${idx})" class="text-red-400 font-bold ml-1">×</button>`;
         filePreviewContainer.appendChild(div);
       });
     }
 
-    window.removeFile = function(index) { attachedFiles.splice(index, 1); renderFilePreviews(); };
+    window.removeFile = function(idx) { attachedFiles.splice(idx, 1); renderFilePreviews(); };
 
-    sendBtn.addEventListener('click', async () => {
+    sendBtn.onclick = async () => {
       const text = promptInput.value.trim();
       if (!text && attachedFiles.length === 0) return;
 
-      promptInput.value = '';
-      promptInput.style.height = 'auto';
+      promptInput.value = ''; promptInput.style.height = 'auto';
 
-      // Формируем payload для истории и воркера
-      const payloadParts = [];
-      if (text) payloadParts.push({ text: text });
-      attachedFiles.push(...attachedFiles); // Фиксация вложений
-
-      const userMsgRecord = { role: 'user', content: text, files: [...attachedFiles] };
-      chatHistory.push(userMsgRecord);
-      localStorage.setItem('ai_sys_history', JSON.stringify(chatHistory));
-
-      renderChatFromHistory(); 
-      const currentFiles = [...attachedFiles];
-      attachedFiles = [];
-      renderFilePreviews();
-
-      if (compareModeCheck.checked) {
-        executeModelQuery(modelSelect1.value, 'track1');
-        executeModelQuery(modelSelect2.value, 'track2');
-      } else {
-        executeModelQuery(modelSelect1.value, 'track1');
+      const currentChat = chats[currentChatId];
+      if(currentChat.history.length === 0 && text) {
+        currentChat.title = text.slice(0, 24) + (text.length > 24 ? '...' : '');
       }
-    });
 
-    async function executeModelQuery(modelId, trackName) {
-      const blockId = 'loader-' + Math.random().toString(36).substr(2, 9);
-      const targetTrackElement = trackName === 'track2' ? compareTrack2 : (compareModeCheck.checked ? compareTrack1 : singleTrack);
-      const bColor = trackName === 'track2' ? 'border-green-500' : 'border-blue-500';
-      const tColor = trackName === 'track2' ? 'text-green-400' : 'text-blue-400';
+      currentChat.history.push({ role: 'user', content: text, files: [...attachedFiles] });
+      saveState(); renderSidebarSessions();
 
-      const loadingHtml = `
-        <div id="${blockId}" class="flex justify-start mb-4 w-full">
-          <div class="theme-bg-sec border-l-4 ${bColor} rounded-xl px-4 py-3 w-full shadow-md theme-border">
-            <div class="text-xs ${tColor} font-bold font-mono mb-1">${modelId}:</div>
-            <div class="text-xs theme-text-sec animate-pulse flex items-center gap-2">⚡ Вычисление ответа процессором...</div>
-          </div>
-        </div>`;
-      targetTrackElement.insertAdjacentHTML('beforeend', loadingHtml);
-      chatWindow.scrollTop = chatWindow.scrollHeight;
+      const m1 = modelSelect1.value;
+      const m2 = modelSelect2.value;
+      const isCompare = compareModeCheck.checked;
 
+      activeLoaders['track1'] = m1;
+      if(isCompare) activeLoaders['track2'] = m2;
+
+      renderActiveChat();
+      attachedFiles = []; renderFilePreviews();
+
+      // Параллельное выполнение запросов без перезаписи лоадеров сторонних треков
+      const tasks = [executeRequest(m1, 'track1')];
+      if(isCompare) tasks.push(executeRequest(m2, 'track2'));
+      await Promise.all(tasks);
+    };
+
+    async function executeRequest(modelId, trackName) {
       try {
-        // Формируем историю для отправки на Cloudflare Worker
-        const formattedMessages = chatHistory.map(msg => {
+        const history = chats[currentChatId].history;
+        const formattedMessages = history.map(msg => {
           if (msg.role === 'user') {
             const parts = [];
             if (msg.content) parts.push({ text: msg.content });
-            if (msg.files) {
-              msg.files.forEach(f => parts.push({ inlineData: { mimeType: f.type, data: f.base64 } }));
-            }
-            return { role: 'user', parts: parts, content: msg.content };
+            if (msg.files) msg.files.forEach(f => parts.push({ inlineData: { mimeType: f.type, data: f.base64 } }));
+            return { role: 'user', parts, content: msg.content };
           }
           return { role: 'assistant', content: msg.content };
         });
@@ -455,31 +494,30 @@
         });
         const data = await res.json();
         
-        document.getElementById(blockId).remove();
+        delete activeLoaders[trackName];
 
-        if (data.error) {
-          const errHtml = `<div class="theme-bg-sec border-l-4 border-red-500 rounded-xl px-4 py-3 w-full shadow-md theme-border text-sm text-red-400 font-medium">⚠️ Ошибка системы: ${data.error}</div>`;
-          targetTrackElement.insertAdjacentHTML('beforeend', errHtml);
+        if (!data.error) {
+          chats[currentChatId].history.push({ role: 'assistant', modelId, content: data.text, track: trackName });
+          saveState();
         } else {
-          chatHistory.push({ role: 'assistant', modelId: modelId, content: data.text, track: trackName });
-          localStorage.setItem('ai_sys_history', JSON.stringify(chatHistory));
-          renderChatFromHistory();
+          alert(`Ошибка ${modelId}: ${data.error}`);
         }
       } catch (e) {
-        document.getElementById(blockId).remove();
-        const errHtml = `<div class="theme-bg-sec border-l-4 border-red-500 rounded-xl px-4 py-3 w-full shadow-md theme-border text-sm text-red-400 font-medium">⚠️ Сбой линии связи с прокси</div>`;
-        targetTrackElement.insertAdjacentHTML('beforeend', errHtml);
+        delete activeLoaders[trackName];
+        alert(`Ошибка сети при работе с ${modelId}`);
       }
+      renderActiveChat();
     }
 
     promptInput.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = (this.scrollHeight) + 'px';
+      this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';
     });
 
-    // Стартовая инициализация данных сессии
+    // Инициализация
+    if(!currentChatId || !chats[currentChatId]) createNewSession();
     loadModels();
-    renderChatFromHistory();
+    renderSidebarSessions();
+    renderActiveChat();
   </script>
 </body>
 </html>
