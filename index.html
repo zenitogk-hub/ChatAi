@@ -1,869 +1,423 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Чат-АИ</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg: #ffffff;
-  --sidebar-bg: #f7f7f8;
-  --border: #e5e5e7;
-  --text: #1a1a1a;
-  --text-secondary: #6e6e73;
-  --hover: #ececee;
-  --accent: #615ced;
-  --accent-hover: #4f4ce0;
-  --msg-user: #f0f0f2;
-  --msg-ai: transparent;
-  --code-bg: #f5f5f7;
-  --error: #cf222e;
-  --ok: #1a7f37;
-  --shadow: rgba(0,0,0,0.05);
-}
-
-[data-theme="dark"] {
-  --bg: #0f1115;
-  --sidebar-bg: #181a20;
-  --border: #2a2d35;
-  --text: #e6e8ee;
-  --text-secondary: #9ba0aa;
-  --hover: #232730;
-  --accent: #7c7cf5;
-  --accent-hover: #615ced;
-  --msg-user: #232730;
-  --msg-ai: transparent;
-  --code-bg: #232730;
-  --error: #ff7b72;
-  --ok: #4ac26b;
-  --shadow: rgba(0,0,0,0.3);
-}
-
-html, body { height: 100%; overflow: hidden; }
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  transition: background 0.3s, color 0.3s;
-  font-size: 15px;
-  line-height: 1.55;
-}
-
-/* ===== Layout ===== */
-.app { display: flex; height: 100vh; }
-
-/* ===== Sidebar ===== */
-.sidebar {
-  width: 280px;
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  transition: transform 0.3s ease;
-}
-.sidebar-header {
-  padding: 14px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  gap: 8px;
-}
-.sidebar-header h1 {
-  font-size: 16px;
-  font-weight: 600;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.icon-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--text-secondary);
-  font-size: 14px;
-  padding: 6px 10px;
-  transition: all 0.2s;
-}
-.icon-btn:hover { background: var(--hover); color: var(--text); }
-.new-chat-btn {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: background 0.2s;
-  margin: 12px 14px;
-  width: calc(100% - 28px);
-}
-.new-chat-btn:hover { background: var(--accent-hover); }
-
-.chat-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 8px 8px;
-}
-.chat-item {
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-bottom: 4px;
-  font-size: 14px;
-  color: var(--text);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
-  transition: background 0.2s;
-}
-.chat-item:hover { background: var(--hover); }
-.chat-item.active { background: var(--hover); font-weight: 500; }
-.chat-item .del {
-  opacity: 0;
-  font-size: 12px;
-  color: var(--text-secondary);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-.chat-item:hover .del { opacity: 1; }
-.chat-item .del:hover { background: var(--bg); color: var(--error); }
-.chat-item .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-
-.sidebar-footer {
-  padding: 12px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.sidebar-footer button { flex: 1; min-width: 70px; }
-
-/* ===== Main ===== */
-.main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  position: relative;
-}
-
-.header {
-  padding: 12px 18px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--bg);
-  z-index: 2;
-}
-.menu-btn {
-  display: none;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 10px;
-  cursor: pointer;
-  color: var(--text);
-  font-size: 16px;
-}
-.model-select {
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-  cursor: pointer;
-  flex: 1;
-  min-width: 0;
-  max-width: 360px;
-}
-.status {
-  font-size: 12px;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: auto;
-}
-.status.err { color: var(--error); }
-.status.ok { color: var(--ok); }
-.status .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-
-.proxy-bar {
-  background: var(--sidebar-bg);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 18px;
-  display: none;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.proxy-bar.show { display: flex; }
-.proxy-bar input {
-  flex: 1;
-  min-width: 200px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 13px;
-}
-.proxy-bar button {
-  padding: 8px 14px;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.proxy-bar button:hover { background: var(--accent-hover); }
-.proxy-bar button.ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
-.proxy-bar .hint { font-size: 12px; color: var(--text-secondary); flex-basis: 100%; }
-
-/* ===== Chat area ===== */
-.chat-area {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px 18px;
-  display: flex;
-  flex-direction: column;
-}
-.welcome {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: var(--text-secondary);
-  gap: 12px;
-  padding: 30px 12px;
-}
-.welcome h1 { font-size: 28px; font-weight: 600; color: var(--text); }
-.welcome p { font-size: 15px; max-width: 460px; }
-.welcome .examples { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
-.welcome .examples button {
-  padding: 8px 14px;
-  background: var(--msg-user);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  color: var(--text);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.welcome .examples button:hover { background: var(--hover); border-color: var(--accent); }
-
-.messages {
-  max-width: 820px;
-  width: 100%;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.message { display: flex; gap: 12px; }
-.message.user { flex-direction: row-reverse; }
-.message .avatar {
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: white;
-  display: grid; place-items: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.message.user .avatar { background: var(--msg-user); color: var(--text); }
-.message .bubble {
-  background: var(--msg-user);
-  padding: 10px 14px;
-  border-radius: 14px;
-  max-width: calc(100% - 50px);
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-.message.assistant .bubble { background: transparent; padding-left: 0; }
-.message .meta {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-}
-.message .content :first-child { margin-top: 0; }
-.message .content :last-child { margin-bottom: 0; }
-.message .content p { margin: 8px 0; }
-.message .content ul, .message .content ol { margin: 8px 0; padding-left: 22px; }
-.message .content code {
-  background: var(--code-bg);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 0.9em;
-}
-.message .content pre {
-  background: var(--code-bg);
-  padding: 12px 14px;
-  border-radius: 8px;
-  overflow-x: auto;
-  margin: 10px 0;
-}
-.message .content pre code { background: transparent; padding: 0; }
-.message .content blockquote {
-  border-left: 3px solid var(--accent);
-  padding-left: 12px;
-  color: var(--text-secondary);
-  margin: 8px 0;
-}
-.message .content h1, .message .content h2, .message .content h3 { margin: 14px 0 8px; font-weight: 600; }
-.message .content h1 { font-size: 20px; }
-.message .content h2 { font-size: 17px; }
-.message .content h3 { font-size: 15px; }
-.message .content table { border-collapse: collapse; margin: 10px 0; }
-.message .content th, .message .content td { border: 1px solid var(--border); padding: 6px 10px; }
-.message .content .err { color: var(--error); }
-
-.loading-dots::after {
-  content: '';
-  animation: dots 1.2s steps(4, end) infinite;
-}
-@keyframes dots {
-  0% { content: ''; }
-  25% { content: '.'; }
-  50% { content: '..'; }
-  75% { content: '...'; }
-}
-
-/* ===== Composer ===== */
-.composer {
-  border-top: 1px solid var(--border);
-  padding: 12px 18px;
-  background: var(--bg);
-}
-.composer-inner {
-  max-width: 820px;
-  margin: 0 auto;
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
-}
-#input {
-  flex: 1;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  font: inherit;
-  background: var(--bg);
-  color: var(--text);
-  resize: none;
-  min-height: 44px;
-  max-height: 200px;
-  line-height: 1.5;
-}
-#input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-.send-btn {
-  width: 44px;
-  height: 44px;
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 18px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  transition: background 0.2s;
-}
-.send-btn:hover:not(:disabled) { background: var(--accent-hover); }
-.send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* ===== Mobile ===== */
-@media (max-width: 720px) {
-  .sidebar {
-    position: fixed;
-    top: 0; bottom: 0; left: 0;
-    z-index: 10;
-    transform: translateX(-100%);
-    box-shadow: 2px 0 12px var(--shadow);
-  }
-  .sidebar.open { transform: translateX(0); }
-  .menu-btn { display: inline-block; }
-  .header h1, .model-select { font-size: 14px; }
-  .messages { gap: 12px; }
-  .welcome h1 { font-size: 22px; }
-}
-.backdrop {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.3);
-  z-index: 9;
-}
-.backdrop.show { display: block; }
-
-.toast {
-  position: fixed;
-  bottom: 80px; left: 50%;
-  transform: translateX(-50%);
-  background: var(--text);
-  color: var(--bg);
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  z-index: 20;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-  max-width: 90vw;
-  text-align: center;
-}
-.toast.show { opacity: 1; }
-.toast.err { background: var(--error); color: white; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>💬 Чат-АИ</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Header */
+    .header {
+      background: #16213e;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #0f3460;
+    }
+    .header h1 { font-size: 24px; }
+    .header-controls button {
+      margin-left: 10px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #0f3460;
+      color: #fff;
+      font-size: 14px;
+    }
+    .header-controls button:hover { background: #e94560; }
+    
+    /* Filters */
+    .filters {
+      background: #16213e;
+      padding: 15px 20px;
+      border-bottom: 1px solid #0f3460;
+    }
+    .filter-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-group label {
+      font-size: 13px;
+      color: #aaa;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .filter-group input[type="checkbox"] {
+      cursor: pointer;
+      width: 16px;
+      height: 16px;
+    }
+    .filter-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 6px 12px;
+      border: 1px solid #0f3460;
+      border-radius: 20px;
+      background: #1a1a2e;
+      color: #aaa;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .filter-btn.active {
+      background: #e94560;
+      color: #fff;
+      border-color: #e94560;
+    }
+    .filter-btn:hover:not(.active) {
+      background: #0f3460;
+      color: #fff;
+    }
+    
+    /* Legend */
+    .legend {
+      display: flex;
+      gap: 15px;
+      font-size: 12px;
+      color: #888;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .badge {
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-fast { background: #f39c12; color: #000; }
+    .badge-lite { background: #3498db; color: #fff; }
+    .badge-pro { background: #9b59b6; color: #fff; }
+    .badge-std { background: #7f8c8d; color: #fff; }
+    .badge-preview { background: #e67e22; color: #fff; }
+    .badge-latest { background: #2ecc71; color: #000; }
+    
+    /* Chat list */
+    .chat-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .chat-item {
+      background: #16213e;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+    .chat-item:hover {
+      transform: translateX(5px);
+      border-color: #0f3460;
+    }
+    .chat-item.active {
+      border-color: #e94560;
+      background: #0f3460;
+    }
+    .chat-item h3 {
+      font-size: 16px;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chat-item .meta {
+      font-size: 12px;
+      color: #888;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .chat-item .badges {
+      display: flex;
+      gap: 5px;
+    }
+    
+    /* Model badges */
+    .model-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 15px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .model-badge.free { background: #27ae60; color: #fff; }
+    .model-badge.paid { background: #e74c3c; color: #fff; }
+    .model-badge.fast { background: #f39c12; color: #000; }
+    .model-badge.turbo { background: #e94560; color: #fff; }
+    .model-badge.preview { background: #e67e22; color: #fff; }
+    
+    /* Provider tags */
+    .provider-gemini { color: #3498db; }
+    .provider-openai { color: #2ecc71; }
+    .provider-groq { color: #9b59b6; }
+    
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+    .empty-state h2 {
+      font-size: 24px;
+      margin-bottom: 10px;
+      color: #888;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1a1a2e; }
+    ::-webkit-scrollbar-thumb {
+      background: #0f3460;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: #e94560; }
+  </style>
 </head>
 <body>
-
-<div class="app">
-  <div class="backdrop" id="backdrop" onclick="toggleSidebar()"></div>
-
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <h1>💬 Чат-АИ</h1>
-      <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Тема">🌙</button>
+  <div class="header">
+    <h1>💬 Чат-АИ</h1>
+    <div class="header-controls">
+      <button onclick="newChat()">🌙 Новый чат</button>
+      <button onclick="toggleSettings()">⚙️</button>
     </div>
-    <button class="new-chat-btn" onclick="newChat()">＋ Новый чат</button>
-    <div class="chat-list" id="chatList"></div>
-    <div class="sidebar-footer">
-      <button class="icon-btn" onclick="toggleProxyBar()" title="Настройки прокси">⚙️</button>
-      <button class="icon-btn" onclick="refreshModels()" title="Обновить список моделей">🔄</button>
-      <button class="icon-btn" onclick="exportChat()" title="Экспорт текущего чата в .md">⬇️</button>
-      <button class="icon-btn" onclick="clearAll()" title="Удалить все чаты">🗑</button>
+  </div>
+  
+  <div class="filters">
+    <div class="filter-group">
+      <label>
+        <input type="checkbox" id="filter-free" checked onchange="applyFilters()">
+        🆓 Бесплатные
+      </label>
+      <label>
+        <input type="checkbox" id="filter-paid" onchange="applyFilters()">
+        💰 Платные
+      </label>
+      <label>
+        <input type="checkbox" id="filter-fast" onchange="applyFilters()">
+        ⚡ Быстрые
+      </label>
     </div>
-  </aside>
-
-  <main class="main">
-    <div class="header">
-      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-      <select class="model-select" id="modelSelect" onchange="saveModel()"></select>
-      <div class="status" id="status"><span class="dot"></span><span id="statusText">…</span></div>
-    </div>
-    <div class="proxy-bar" id="proxyBar">
-      <input id="proxyInput" placeholder="https://chat-ai-proxy.zenitogk.workers.dev" />
-      <button onclick="saveProxy()">Сохранить</button>
-      <button class="ghost" onclick="toggleProxyBar()">Закрыть</button>
-      <div class="hint">URL Cloudflare Worker, куда задеплоен worker.js. Сохраняется локально в браузере.</div>
-    </div>
-    <div class="chat-area" id="chatArea">
-      <div class="welcome" id="welcome">
-        <h1>Привет!</h1>
-        <p>Выбери модель и спроси что-нибудь. История чатов сохраняется локально.</p>
-        <div class="examples">
-          <button onclick="setInput('Объясни квантовую запутанность простыми словами')">🔬 Квантовая запутанность</button>
-          <button onclick="setInput('Напиши короткое стихотворение про осенний дождь')">🌧 Стих про дождь</button>
-          <button onclick="setInput('Составь план изучения Python на 30 дней для новичка')">🐍 Python за 30 дней</button>
-          <button onclick="setInput('Что такое RAG и зачем он нужен?')">🧠 Что такое RAG</button>
-        </div>
-      </div>
-      <div class="messages" id="messages" style="display:none"></div>
-    </div>
-    <div class="composer">
-      <div class="composer-inner">
-        <textarea id="input" rows="1" placeholder="Спроси что-нибудь… (Enter — отправить, Shift+Enter — перенос)" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
-        <button class="send-btn" onclick="send()" id="sendBtn" title="Отправить">➤</button>
+    
+    <div class="filter-group">
+      <span>Провайдер:</span>
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-provider="all" onclick="setProvider('all')">Все</button>
+        <button class="filter-btn" data-provider="gemini" onclick="setProvider('gemini')">Gemini</button>
+        <button class="filter-btn" data-provider="groq" onclick="setProvider('groq')">Groq</button>
+        <button class="filter-btn" data-provider="openai" onclick="setProvider('openai')">OpenAI</button>
       </div>
     </div>
-  </main>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-'use strict';
-
-// ===== Хранилище =====
-const LS = {
-  proxy: 'chat_proxy_url',
-  model: 'chat_model',
-  chats: 'chat_chats',
-  theme: 'chat_theme',
-};
-function getLS(key, def) { try { const v = localStorage.getItem(key); return v === null ? def : v; } catch { return def; } }
-function setLS(key, val) { try { localStorage.setItem(key, val); } catch {} }
-
-let chats = {};
-try { chats = JSON.parse(getLS(LS.chats, '{}')) || {}; } catch { chats = {}; }
-let currentChatId = null;
-let models = [];
-let proxyUrl = '';
-
-// ===== Утилиты =====
-function $(id) { return document.getElementById(id); }
-function toast(text, kind) {
-  const t = $('toast');
-  t.textContent = text;
-  t.className = 'toast show' + (kind === 'err' ? ' err' : '');
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => { t.className = 'toast'; }, 3000);
-}
-function setStatus(text, kind) {
-  $('statusText').textContent = text;
-  $('status').className = 'status' + (kind ? ' ' + kind : '');
-}
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text == null ? '' : String(text);
-  return div.innerHTML;
-}
-function setInput(text) {
-  $('input').value = text;
-  autoResize($('input'));
-  $('input').focus();
-}
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 200) + 'px';
-}
-function handleKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    send();
-  }
-}
-
-// ===== Тема =====
-function loadTheme() {
-  const theme = getLS(LS.theme, 'light');
-  document.documentElement.setAttribute('data-theme', theme);
-  $('themeBtn').textContent = theme === 'dark' ? '☀️' : '🌙';
-}
-function toggleTheme() {
-  const cur = document.documentElement.getAttribute('data-theme') || 'light';
-  const next = cur === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  setLS(LS.theme, next);
-  $('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
-}
-
-// ===== Прокси =====
-function loadProxy() {
-  proxyUrl = (getLS(LS.proxy, '') || '').trim();
-  $('proxyInput').value = proxyUrl;
-  if (!proxyUrl) {
-    toggleProxyBar(true);
-    setStatus('введи URL прокси', 'err');
-  }
-}
-function saveProxy() {
-  const url = $('proxyInput').value.trim().replace(/\/+$/, '');
-  if (!url) { toast('URL не может быть пустым', 'err'); return; }
-  proxyUrl = url;
-  setLS(LS.proxy, proxyUrl);
-  toast('Прокси сохранён');
-  toggleProxyBar(false);
-  loadModels();
-}
-function toggleProxyBar(force) {
-  const bar = $('proxyBar');
-  if (typeof force === 'boolean') {
-    bar.classList.toggle('show', force);
-  } else {
-    bar.classList.toggle('show');
-  }
-}
-
-// ===== Модели =====
-async function loadModels() {
-  if (!proxyUrl) {
-    setStatus('нет прокси', 'err');
-    return;
-  }
-  setStatus('загружаю модели…');
-  try {
-    const r = await fetch(proxyUrl + '/v1/models');
-    const text = await r.text();
-    let data;
-    try { data = JSON.parse(text); }
-    catch { throw new Error('Прокси вернул не-JSON (HTTP ' + r.status + '). Проверь URL или статус воркера.'); }
-    if (!r.ok) throw new Error(data.message || data.error || ('HTTP ' + r.status));
-
-    // Сортируем: сначала ✅, потом 🟡, потом ❌
-    const score = m => (m.available === false ? 2 : m.available === null ? 1 : 0);
-    models = (data.models || [])
-      .filter(m => m.available !== false) // скрываем платные/недоступные
-      .slice()
-      .sort((a, b) => score(a) - score(b));
-
-    const select = $('modelSelect');
-    if (!models.length) {
-      select.innerHTML = '<option value="">— нет доступных моделей —</option>';
-      setStatus('все модели недоступны', 'err');
-      return;
-    }
-    select.innerHTML = models.map(m => {
-      const icon = m.available === true ? '✅ ' : '🟡 ';
-      return `<option value="${escapeHtml(m.id)}">${escapeHtml(icon + m.label)}</option>`;
-    }).join('');
-
-    const saved = getLS(LS.model, '');
-    if (saved && models.find(m => m.id === saved)) {
-      select.value = saved;
-    } else {
-      select.value = models[0].id;
-      setLS(LS.model, models[0].id);
-    }
-    setStatus(`готово · ${models.length} моделей`, 'ok');
-  } catch (e) {
-    models = [];
-    $('modelSelect').innerHTML = '<option value="">— ошибка —</option>';
-    setStatus(String(e.message || e), 'err');
-    toast('Не удалось загрузить модели: ' + e.message, 'err');
-  }
-}
-function saveModel() {
-  setLS(LS.model, $('modelSelect').value);
-}
-function refreshModels() { loadModels(); }
-
-// ===== Чаты =====
-function saveChats() { setLS(LS.chats, JSON.stringify(chats)); }
-function loadChatList() {
-  const list = $('chatList');
-  const entries = Object.entries(chats).sort((a, b) => (b[1].updated || 0) - (a[1].updated || 0));
-  if (!entries.length) {
-    list.innerHTML = '<div style="padding:16px;color:var(--text-secondary);font-size:13px;text-align:center;">Пока нет чатов</div>';
-    return;
-  }
-  list.innerHTML = entries.map(([id, chat]) => `
-    <div class="chat-item ${id === currentChatId ? 'active' : ''}" onclick="loadChat('${id}')">
-      <span class="label">${escapeHtml(chat.title || 'Новый чат')}</span>
-      <button class="del" onclick="event.stopPropagation();deleteChat('${id}')" title="Удалить">✕</button>
-    </div>
-  `).join('');
-}
-function newChat() {
-  currentChatId = null;
-  $('welcome').style.display = 'flex';
-  $('messages').style.display = 'none';
-  $('messages').innerHTML = '';
-  $('input').value = '';
-  autoResize($('input'));
-  closeSidebar();
-}
-function deleteChat(id) {
-  if (!confirm('Удалить этот чат?')) return;
-  delete chats[id];
-  saveChats();
-  if (currentChatId === id) newChat();
-  loadChatList();
-}
-function loadChat(id) {
-  const chat = chats[id];
-  if (!chat) return;
-  currentChatId = id;
-  renderMessages(chat.messages || []);
-  loadChatList();
-  closeSidebar();
-}
-function renderMessages(messages) {
-  $('welcome').style.display = 'none';
-  const div = $('messages');
-  div.style.display = 'flex';
-  div.innerHTML = messages.map(renderMessageHTML).join('');
-  scrollToBottom();
-}
-function renderMessageHTML(msg) {
-  const isUser = msg.role === 'user';
-  const avatar = isUser ? '🧑' : '🤖';
-  const name = isUser ? 'ты' : (msg.model || 'AI');
-  const ts = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : '';
-  let body;
-  if (isUser) {
-    body = escapeHtml(msg.content || '');
-  } else {
-    try {
-      body = marked.parse(msg.content || '');
-    } catch {
-      body = escapeHtml(msg.content || '');
-    }
-  }
-  return `
-    <div class="message ${isUser ? 'user' : 'assistant'}">
-      <div class="avatar">${avatar}</div>
-      <div>
-        <div class="meta">${escapeHtml(name)} · ${escapeHtml(ts)}</div>
-        <div class="bubble"><div class="content">${body}</div></div>
+    
+    <div class="filter-group">
+      <span>Сортировка:</span>
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-sort="priority" onclick="setSort('priority')">🔥 По мощности</button>
+        <button class="filter-btn" data-sort="newest" onclick="setSort('newest')">✨ По новизне</button>
+        <button class="filter-btn" data-sort="speed" onclick="setSort('speed')">⚡ По скорости</button>
+        <button class="filter-btn" data-sort="name" onclick="setSort('name')">📝 По имени</button>
       </div>
     </div>
-  `;
-}
-function scrollToBottom() {
-  const a = $('chatArea');
-  setTimeout(() => { a.scrollTop = a.scrollHeight; }, 0);
-}
-
-// ===== Отправка =====
-async function send() {
-  const input = $('input');
-  const text = input.value.trim();
-  if (!text) return;
-
-  const model = $('modelSelect').value;
-  if (!model || !proxyUrl) {
-    toast('Сначала настрой прокси и выбери модель', 'err');
-    if (!proxyUrl) toggleProxyBar(true);
-    return;
-  }
-
-  const sendBtn = $('sendBtn');
-  sendBtn.disabled = true;
-  input.disabled = true;
-
-  // Создаём чат если нет
-  if (!currentChatId) {
-    currentChatId = 'chat_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-    chats[currentChatId] = { title: text.slice(0, 60), messages: [], updated: Date.now() };
-  }
-  const chat = chats[currentChatId];
-
-  const userMsg = { role: 'user', content: text, timestamp: Date.now() };
-  chat.messages.push(userMsg);
-  chat.updated = Date.now();
-  saveChats();
-
-  // Рендерим
-  $('welcome').style.display = 'none';
-  const div = $('messages');
-  div.style.display = 'flex';
-  div.innerHTML = chat.messages.map(renderMessageHTML).join('');
-
-  input.value = '';
-  autoResize(input);
-  scrollToBottom();
-
-  // Плейсхолдер "Думаю"
-  const loadingId = 'loading_' + Date.now();
-  div.insertAdjacentHTML('beforeend', `
-    <div class="message assistant" id="${loadingId}">
-      <div class="avatar">🤖</div>
-      <div>
-        <div class="meta">${escapeHtml(model)}</div>
-        <div class="bubble"><div class="content"><span class="loading-dots">Думаю</span></div></div>
-      </div>
+    
+    <div class="legend">
+      <div class="legend-item"><span class="badge badge-fast">⚡ FAST</span> Быстрая</div>
+      <div class="legend-item"><span class="badge badge-lite">LITE</span> Облегченная</div>
+      <div class="legend-item"><span class="badge badge-pro">💰 PRO</span> Платная</div>
+      <div class="legend-item"><span class="badge badge-preview">🔬 PREVIEW</span> Тестовая</div>
+      <div class="legend-item"><span class="badge badge-latest">✨ LATEST</span> Последняя</div>
     </div>
-  `);
-  scrollToBottom();
-  loadChatList();
+  </div>
+  
+  <div class="chat-list" id="chatList">
+    <div class="empty-state">
+      <h2>🚀 Выбери модель</h2>
+      <p>Используй фильтры выше чтобы найти подходящую</p>
+    </div>
+  </div>
+  
+  <div id="settings" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#16213e; padding:30px; border-radius:15px; z-index:1000; min-width:400px;">
+    <h2 style="margin-bottom:20px;">⚙️ Настройки</h2>
+    <label style="display:block; margin-bottom:15px;">
+      <div style="margin-bottom:5px; color:#aaa;">URL Cloudflare Worker:</div>
+      <input type="text" id="workerUrl" style="width:100%; padding:10px; border-radius:6px; border:1px solid #0f3460; background:#1a1a2e; color:#fff;" placeholder="https://your-worker.workers.dev">
+    </label>
+    <button onclick="saveSettings()" style="padding:10px 20px; background:#e94560; color:#fff; border:none; border-radius:6px; cursor:pointer;">Сохранить</button>
+    <button onclick="toggleSettings()" style="padding:10px 20px; background:#0f3460; color:#fff; border:none; border-radius:6px; cursor:pointer; margin-left:10px;">Закрыть</button>
+  </div>
+  
+  <div id="overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:999;" onclick="toggleSettings()"></div>
 
-  try {
-    const r = await fetch(proxyUrl + '/v1/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        messages: chat.messages.map(m => ({ role: m.role, content: m.content })),
-      }),
-    });
-    const text = await r.text();
-    let data;
-    try { data = JSON.parse(text); }
-    catch { throw new Error('Прокси вернул не-JSON (HTTP ' + r.status + ')'); }
-
-    const loadingEl = $(loadingId);
-    if (loadingEl) loadingEl.remove();
-
-    if (!r.ok || data.error) {
-      throw new Error(data.message || data.error || ('HTTP ' + r.status));
+  <script>
+    let currentFilter = { provider: 'all', sort: 'priority', free: true, paid: false, fast: false };
+    let models = [];
+    
+    // Загрузка моделей
+    async function loadModels() {
+      try {
+        const workerUrl = localStorage.getItem('workerUrl');
+        if (!workerUrl) {
+          document.getElementById('chatList').innerHTML = `
+            <div class="empty-state">
+              <h2>⚙️ Сначала настройте</h2>
+              <p>Нажмите ⚙️ и укажите URL Cloudflare Worker</p>
+            </div>
+          `;
+          return;
+        }
+        
+        const res = await fetch(workerUrl + '/v1/models');
+        const data = await res.json();
+        models = data.models || [];
+        renderModels();
+      } catch (e) {
+        console.error('Error loading models:', e);
+      }
     }
-
-    const aiMsg = {
-      role: 'assistant',
-      content: data.text || '(пустой ответ)',
-      model,
-      timestamp: Date.now(),
-    };
-    chat.messages.push(aiMsg);
-    chat.updated = Date.now();
-    saveChats();
-
-    div.insertAdjacentHTML('beforeend', renderMessageHTML(aiMsg));
-    scrollToBottom();
-    loadChatList();
-  } catch (e) {
-    const loadingEl = $(loadingId);
-    if (loadingEl) loadingEl.remove();
-    const errMsg = { role: 'assistant', content: '⚠️ **Ошибка:** ' + (e.message || e), model, timestamp: Date.now() };
-    div.insertAdjacentHTML('beforeend', renderMessageHTML(errMsg));
-    scrollToBottom();
-    toast('Ошибка: ' + e.message, 'err');
-  } finally {
-    sendBtn.disabled = false;
-    input.disabled = false;
-    input.focus();
-  }
-}
-
-// ===== Экспорт / Очистка =====
-function exportChat() {
-  if (!currentChatId || !chats[currentChatId]) { toast('Нет активного чата', 'err'); return; }
-  const chat = chats[currentChatId];
-  let md = `# ${chat.title || 'Чат'}\n\n`;
-  chat.messages.forEach(m => {
-    md += `## ${m.role === 'user' ? '🧑 Ты' : '🤖 ' + (m.model || 'AI')} · ${new Date(m.timestamp || Date.now()).toLocaleString()}\n\n`;
-    md += (m.content || '') + '\n\n---\n\n';
-  });
-  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = (chat.title || 'chat').replace(/[^a-zа-яё0-9_-]+/gi, '_') + '.md';
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-}
-function clearAll() {
-  if (!confirm('Удалить ВСЕ чаты? Это нельзя отменить.')) return;
-  chats = {};
-  setLS(LS.chats, '{}');
-  newChat();
-  loadChatList();
-  toast('Все чаты удалены');
-}
-
-// ===== Мобильное меню =====
-function toggleSidebar() {
-  $('sidebar').classList.toggle('open');
-  $('backdrop').classList.toggle('show');
-}
-function closeSidebar() {
-  $('sidebar').classList.remove('open');
-  $('backdrop').classList.remove('show');
-}
-
-// ===== Старт =====
-(async function init() {
-  loadTheme();
-  loadProxy();
-  loadChatList();
-  if (proxyUrl) {
-    await loadModels();
-  }
-})();
-</script>
+    
+    // Рендер моделей
+    function renderModels() {
+      const list = document.getElementById('chatList');
+      let filtered = models.filter(m => {
+        // Фильтр по бесплатности/платности
+        if (currentFilter.free && !m.paidOnly && currentFilter.paid && m.paidOnly) return true;
+        if (currentFilter.free && !m.paidOnly && !currentFilter.paid && m.paidOnly) return true;
+        if (!currentFilter.free && !m.paidOnly && currentFilter.paid && m.paidOnly) return true;
+        if (!currentFilter.free && !m.paidOnly && !currentFilter.paid && m.paidOnly) return false;
+        
+        // Фильтр по провайдеру
+        if (currentFilter.provider !== 'all' && m.provider !== currentFilter.provider) return false;
+        
+        // Фильтр быстрых
+        if (currentFilter.fast && !m.label.includes('FAST') && !m.label.includes('LITE')) return false;
+        
+        return true;
+      });
+      
+      // Сортировка
+      filtered.sort((a, b) => {
+        if (currentFilter.sort === 'priority') return (b.priority || 0) - (a.priority || 0);
+        if (currentFilter.sort === 'newest') return (b.major || 0) - (a.major || 0) || (b.minor || 0) - (a.minor || 0);
+        if (currentFilter.sort === 'speed') {
+          const aSpeed = a.label.includes('LITE') ? 3 : a.label.includes('FAST') ? 2 : 1;
+          const bSpeed = b.label.includes('LITE') ? 3 : b.label.includes('FAST') ? 2 : 1;
+          return bSpeed - aSpeed;
+        }
+        if (currentFilter.sort === 'name') return (a.label || '').localeCompare(b.label || '');
+        return 0;
+      });
+      
+      if (filtered.length === 0) {
+        list.innerHTML = '<div class="empty-state"><h2>😕 Ничего не найдено</h2><p>Попробуйте изменить фильтры</p></div>';
+        return;
+      }
+      
+      list.innerHTML = filtered.map(m => {
+        const badges = [];
+        if (m.paidOnly) badges.push('<span class="model-badge paid">💰 Платная</span>');
+        else if (m.label.includes('LITE')) badges.push('<span class="model-badge fast">⚡ LITE</span>');
+        else if (m.label.includes('FAST')) badges.push('<span class="model-badge fast">⚡ FAST</span>');
+        if (m.label.includes('PREVIEW')) badges.push('<span class="model-badge preview">🔬 Preview</span>');
+        if (m.label.includes('LATEST')) badges.push('<span class="model-badge turbo">✨ Latest</span>');
+        
+        const providerClass = `provider-${m.provider}`;
+        const providerName = m.provider === 'gemini' ? '🔮 Gemini' : m.provider === 'openai' ? '🤖 OpenAI' : '⚡ Groq';
+        
+        return `
+          <div class="chat-item" onclick="selectModel('${m.id}')">
+            <h3>
+              <span class="${providerClass}">${providerName}</span>
+              ${badges.join(' ')}
+            </h3>
+            <div style="margin-top:8px; font-size:14px;">${m.label || m.id}</div>
+            <div class="meta">
+              <span>ID: ${m.id}</span>
+              ${m.reason ? `<span>⚠️ ${m.reason}</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function applyFilters() {
+      currentFilter.free = document.getElementById('filter-free').checked;
+      currentFilter.paid = document.getElementById('filter-paid').checked;
+      currentFilter.fast = document.getElementById('filter-fast').checked;
+      renderModels();
+    }
+    
+    function setProvider(provider) {
+      currentFilter.provider = provider;
+      document.querySelectorAll('.filter-buttons button').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.provider === provider) btn.classList.add('active');
+      });
+      renderModels();
+    }
+    
+    function setSort(sort) {
+      currentFilter.sort = sort;
+      document.querySelectorAll('.filter-buttons button').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.sort === sort) btn.classList.add('active');
+      });
+      renderModels();
+    }
+    
+    function selectModel(modelId) {
+      localStorage.setItem('selectedModel', modelId);
+      alert('Выбрана модель: ' + modelId);
+      // Здесь можно добавить переключение на чат
+    }
+    
+    function newChat() {
+      // Создание нового чата
+    }
+    
+    function toggleSettings() {
+      const settings = document.getElementById('settings');
+      const overlay = document.getElementById('overlay');
+      if (settings.style.display === 'none') {
+        document.getElementById('workerUrl').value = localStorage.getItem('workerUrl') || '';
+        settings.style.display = 'block';
+        overlay.style.display = 'block';
+      } else {
+        settings.style.display = 'none';
+        overlay.style.display = 'none';
+      }
+    }
+    
+    function saveSettings() {
+      localStorage.setItem('workerUrl', document.getElementById('workerUrl').value);
+      toggleSettings();
+      loadModels();
+    }
+    
+    // Инициализация
+    loadModels();
+  </script>
 </body>
 </html>
