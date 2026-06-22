@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>💬 Чат-АИ</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #1a1a2e;
@@ -15,408 +15,564 @@
       flex-direction: column;
     }
     
-    /* Header */
+    /* Шапка */
     .header {
       background: #16213e;
       padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       border-bottom: 2px solid #0f3460;
     }
-    .header h1 { font-size: 24px; }
-    .header-controls button {
-      margin-left: 10px;
+    .header h1 { margin: 0 0 10px 0; font-size: 24px; }
+    
+    /* Фильтры */
+    .filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .filters input, .filters select {
       padding: 8px 12px;
-      border: none;
+      border: 1px solid #0f3460;
       border-radius: 6px;
-      cursor: pointer;
-      background: #0f3460;
-      color: #fff;
+      background: #1a1a2e;
+      color: #eee;
       font-size: 14px;
     }
-    .header-controls button:hover { background: #e94560; }
+    .filters input { flex: 1; min-width: 200px; }
+    .filters select { min-width: 150px; }
     
-    /* Filters */
-    .filters {
-      background: #16213e;
-      padding: 15px 20px;
-      border-bottom: 1px solid #0f3460;
-    }
-    .filter-group {
+    /* Чекбоксы фильтров */
+    .filter-toggles {
       display: flex;
       gap: 15px;
-      margin-bottom: 10px;
       flex-wrap: wrap;
       align-items: center;
     }
-    .filter-group label {
-      font-size: 13px;
-      color: #aaa;
+    .filter-toggles label {
       display: flex;
       align-items: center;
       gap: 5px;
-    }
-    .filter-group input[type="checkbox"] {
       cursor: pointer;
-      width: 16px;
-      height: 16px;
+      font-size: 14px;
     }
-    .filter-buttons {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .filter-btn {
-      padding: 6px 12px;
-      border: 1px solid #0f3460;
-      border-radius: 20px;
-      background: #1a1a2e;
-      color: #aaa;
+    .filter-toggles input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
       cursor: pointer;
-      font-size: 13px;
-      transition: all 0.2s;
-    }
-    .filter-btn.active {
-      background: #e94560;
-      color: #fff;
-      border-color: #e94560;
-    }
-    .filter-btn:hover:not(.active) {
-      background: #0f3460;
-      color: #fff;
     }
     
-    /* Legend */
-    .legend {
-      display: flex;
-      gap: 15px;
+    /* Счетчик */
+    .count {
       font-size: 12px;
       color: #888;
-      margin-top: 10px;
-      flex-wrap: wrap;
+      margin-top: 5px;
     }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .badge {
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-    .badge-fast { background: #f39c12; color: #000; }
-    .badge-lite { background: #3498db; color: #fff; }
-    .badge-pro { background: #9b59b6; color: #fff; }
-    .badge-std { background: #7f8c8d; color: #fff; }
-    .badge-preview { background: #e67e22; color: #fff; }
-    .badge-latest { background: #2ecc71; color: #000; }
     
-    /* Chat list */
-    .chat-list {
+    /* Список моделей */
+    .models-container {
       flex: 1;
       overflow-y: auto;
-      padding: 20px;
+      padding: 10px;
     }
-    .chat-item {
+    .model-group {
+      margin-bottom: 20px;
+    }
+    .group-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #00d9ff;
+      margin: 15px 0 10px 0;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #0f3460;
+    }
+    .model-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 15px;
+      margin: 5px 0;
       background: #16213e;
-      border-radius: 10px;
-      padding: 15px;
-      margin-bottom: 10px;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s;
       border: 2px solid transparent;
     }
-    .chat-item:hover {
-      transform: translateX(5px);
-      border-color: #0f3460;
-    }
-    .chat-item.active {
-      border-color: #e94560;
+    .model-item:hover {
       background: #0f3460;
+      transform: translateX(5px);
     }
-    .chat-item h3 {
-      font-size: 16px;
-      margin-bottom: 5px;
+    .model-item.selected {
+      border-color: #00d9ff;
+      background: #1a3a5c;
+    }
+    .model-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .model-checkbox {
+      width: 20px;
+      height: 20px;
+      margin-right: 12px;
+      accent-color: #00d9ff;
+    }
+    .model-content {
+      flex: 1;
       display: flex;
-      align-items: center;
-      gap: 8px;
+      flex-direction: column;
+      gap: 4px;
     }
-    .chat-item .meta {
+    .model-label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .model-meta {
       font-size: 12px;
       color: #888;
       display: flex;
       gap: 10px;
       align-items: center;
     }
-    .chat-item .badges {
-      display: flex;
-      gap: 5px;
-    }
     
-    /* Model badges */
-    .model-badge {
+    /* Бейджи */
+    .badge {
       display: inline-block;
-      padding: 3px 10px;
-      border-radius: 15px;
+      padding: 2px 8px;
+      border-radius: 4px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: bold;
       text-transform: uppercase;
     }
-    .model-badge.free { background: #27ae60; color: #fff; }
-    .model-badge.paid { background: #e74c3c; color: #fff; }
-    .model-badge.fast { background: #f39c12; color: #000; }
-    .model-badge.turbo { background: #e94560; color: #fff; }
-    .model-badge.preview { background: #e67e22; color: #fff; }
+    .badge-fast { background: #ff6b6b; color: white; }
+    .badge-lite { background: #4ecdc4; color: #1a1a2e; }
+    .badge-pro { background: #ffe66d; color: #1a1a2e; }
+    .badge-preview { background: #95e1d3; color: #1a1a2e; }
+    .badge-latest { background: #f38181; color: white; }
+    .badge-70b { background: #aa96da; color: white; }
+    .badge-8b { background: #fcbad3; color: #1a1a2e; }
+    .badge-free { background: #a8e6cf; color: #1a1a2e; }
+    .badge-paid { background: #ff8b94; color: white; }
     
-    /* Provider tags */
-    .provider-gemini { color: #3498db; }
-    .provider-openai { color: #2ecc71; }
-    .provider-groq { color: #9b59b6; }
-    
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: #666;
+    /* Чат */
+    .chat-container {
+      border-top: 2px solid #0f3460;
+      padding: 20px;
+      background: #16213e;
     }
-    .empty-state h2 {
-      font-size: 24px;
-      margin-bottom: 10px;
-      color: #888;
+    .chat-messages {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #1a1a2e;
+      border-radius: 8px;
     }
-    
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #1a1a2e; }
-    ::-webkit-scrollbar-thumb {
+    .message {
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 8px;
+    }
+    .message.user {
       background: #0f3460;
-      border-radius: 4px;
+      margin-left: 20%;
     }
-    ::-webkit-scrollbar-thumb:hover { background: #e94560; }
+    .message.assistant {
+      background: #1a3a5c;
+      margin-right: 20%;
+    }
+    .chat-input {
+      display: flex;
+      gap: 10px;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 12px 15px;
+      border: 1px solid #0f3460;
+      border-radius: 8px;
+      background: #1a1a2e;
+      color: #eee;
+      font-size: 14px;
+    }
+    .chat-input button {
+      padding: 12px 25px;
+      background: #00d9ff;
+      color: #1a1a2e;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .chat-input button:hover {
+      background: #00b8d4;
+    }
+    .chat-input button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    
+    /* Подсказки */
+    .hints {
+      font-size: 12px;
+      color: #888;
+      margin-top: 10px;
+      padding: 10px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+    }
+    .hints strong { color: #00d9ff; }
   </style>
 </head>
 <body>
   <div class="header">
     <h1>💬 Чат-АИ</h1>
-    <div class="header-controls">
-      <button onclick="newChat()">🌙 Новый чат</button>
-      <button onclick="toggleSettings()">⚙️</button>
+    
+    <!-- Поиск -->
+    <div class="filters">
+      <input type="text" id="searchInput" placeholder="🔍 Поиск модели (например: flash, llama, 70b)...">
+      
+      <!-- Фильтр по провайдеру -->
+      <select id="providerFilter">
+        <option value="all">Все провайдеры</option>
+        <option value="gemini">Google Gemini</option>
+        <option value="groq">Groq</option>
+      </select>
+      
+      <!-- Фильтр по типу -->
+      <select id="typeFilter">
+        <option value="all">Все модели</option>
+        <option value="fast">⚡ Быстрые (Flash/Lite)</option>
+        <option value="power">⭐ Мощные (70B+/Pro)</option>
+        <option value="preview">🔬 Preview/Experimental</option>
+      </select>
     </div>
-  </div>
-  
-  <div class="filters">
-    <div class="filter-group">
+    
+    <!-- Чекбоксы -->
+    <div class="filter-toggles">
       <label>
-        <input type="checkbox" id="filter-free" checked onchange="applyFilters()">
-        🆓 Бесплатные
+        <input type="checkbox" id="freeOnly" checked>
+        🆓 Только бесплатные
       </label>
       <label>
-        <input type="checkbox" id="filter-paid" onchange="applyFilters()">
-        💰 Платные
+        <input type="checkbox" id="hidePreview">
+        🙈 Скрыть Preview
       </label>
       <label>
-        <input type="checkbox" id="filter-fast" onchange="applyFilters()">
-        ⚡ Быстрые
+        <input type="checkbox" id="sortBySpeed" checked>
+        🏆 Сначала лучшие
       </label>
     </div>
     
-    <div class="filter-group">
-      <span>Провайдер:</span>
-      <div class="filter-buttons">
-        <button class="filter-btn active" data-provider="all" onclick="setProvider('all')">Все</button>
-        <button class="filter-btn" data-provider="gemini" onclick="setProvider('gemini')">Gemini</button>
-        <button class="filter-btn" data-provider="groq" onclick="setProvider('groq')">Groq</button>
-        <button class="filter-btn" data-provider="openai" onclick="setProvider('openai')">OpenAI</button>
+    <div class="count" id="modelCount">Загрузка моделей...</div>
+  </div>
+  
+  <div class="models-container" id="modelsList">
+    <!-- Модели будут здесь -->
+  </div>
+  
+  <div class="chat-container">
+    <div class="chat-messages" id="chatMessages">
+      <div class="message assistant">
+        Привет! Выбери модель и спроси что-нибудь. 
+        <div class="hints">
+          <strong>💡 Подсказки по фильтрам:</strong><br>
+          • <strong>⚡ FAST</strong> — быстрые Flash модели (оптимально)<br>
+          • <strong>LITE</strong> — еще быстрее, но чуть проще<br>
+          • <strong>⭐ 70B</strong> — мощные модели с большим контекстом<br>
+          • <strong>🔬 PREVIEW</strong> — тестовые версии (могут быть нестабильны)<br>
+          • <strong>✨ LATEST</strong> — самые свежие релизы
+        </div>
       </div>
     </div>
-    
-    <div class="filter-group">
-      <span>Сортировка:</span>
-      <div class="filter-buttons">
-        <button class="filter-btn active" data-sort="priority" onclick="setSort('priority')">🔥 По мощности</button>
-        <button class="filter-btn" data-sort="newest" onclick="setSort('newest')">✨ По новизне</button>
-        <button class="filter-btn" data-sort="speed" onclick="setSort('speed')">⚡ По скорости</button>
-        <button class="filter-btn" data-sort="name" onclick="setSort('name')">📝 По имени</button>
-      </div>
-    </div>
-    
-    <div class="legend">
-      <div class="legend-item"><span class="badge badge-fast">⚡ FAST</span> Быстрая</div>
-      <div class="legend-item"><span class="badge badge-lite">LITE</span> Облегченная</div>
-      <div class="legend-item"><span class="badge badge-pro">💰 PRO</span> Платная</div>
-      <div class="legend-item"><span class="badge badge-preview">🔬 PREVIEW</span> Тестовая</div>
-      <div class="legend-item"><span class="badge badge-latest">✨ LATEST</span> Последняя</div>
+    <div class="chat-input">
+      <input type="text" id="messageInput" placeholder="Введите сообщение..." disabled>
+      <button id="sendBtn" disabled>Отправить</button>
     </div>
   </div>
-  
-  <div class="chat-list" id="chatList">
-    <div class="empty-state">
-      <h2>🚀 Выбери модель</h2>
-      <p>Используй фильтры выше чтобы найти подходящую</p>
-    </div>
-  </div>
-  
-  <div id="settings" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#16213e; padding:30px; border-radius:15px; z-index:1000; min-width:400px;">
-    <h2 style="margin-bottom:20px;">⚙️ Настройки</h2>
-    <label style="display:block; margin-bottom:15px;">
-      <div style="margin-bottom:5px; color:#aaa;">URL Cloudflare Worker:</div>
-      <input type="text" id="workerUrl" style="width:100%; padding:10px; border-radius:6px; border:1px solid #0f3460; background:#1a1a2e; color:#fff;" placeholder="https://your-worker.workers.dev">
-    </label>
-    <button onclick="saveSettings()" style="padding:10px 20px; background:#e94560; color:#fff; border:none; border-radius:6px; cursor:pointer;">Сохранить</button>
-    <button onclick="toggleSettings()" style="padding:10px 20px; background:#0f3460; color:#fff; border:none; border-radius:6px; cursor:pointer; margin-left:10px;">Закрыть</button>
-  </div>
-  
-  <div id="overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:999;" onclick="toggleSettings()"></div>
 
   <script>
-    let currentFilter = { provider: 'all', sort: 'priority', free: true, paid: false, fast: false };
-    let models = [];
+    let allModels = [];
+    let selectedModel = null;
+    let workerUrl = localStorage.getItem('workerUrl') || '';
+    
+    // Загрузка URL воркера
+    if (!workerUrl) {
+      workerUrl = prompt('Введите URL Cloudflare Worker:', 'https://your-worker.workers.dev');
+      if (workerUrl) localStorage.setItem('workerUrl', workerUrl);
+    }
     
     // Загрузка моделей
     async function loadModels() {
       try {
-        const workerUrl = localStorage.getItem('workerUrl');
-        if (!workerUrl) {
-          document.getElementById('chatList').innerHTML = `
-            <div class="empty-state">
-              <h2>⚙️ Сначала настройте</h2>
-              <p>Нажмите ⚙️ и укажите URL Cloudflare Worker</p>
-            </div>
-          `;
-          return;
-        }
-        
         const res = await fetch(workerUrl + '/v1/models');
         const data = await res.json();
-        models = data.models || [];
+        allModels = data.models || [];
         renderModels();
       } catch (e) {
-        console.error('Error loading models:', e);
+        document.getElementById('modelCount').textContent = '❌ Ошибка загрузки: ' + e.message;
       }
     }
     
-    // Рендер моделей
+    // Рендер моделей с фильтрами
     function renderModels() {
-      const list = document.getElementById('chatList');
-      let filtered = models.filter(m => {
-        // Фильтр по бесплатности/платности
-        if (currentFilter.free && !m.paidOnly && currentFilter.paid && m.paidOnly) return true;
-        if (currentFilter.free && !m.paidOnly && !currentFilter.paid && m.paidOnly) return true;
-        if (!currentFilter.free && !m.paidOnly && currentFilter.paid && m.paidOnly) return true;
-        if (!currentFilter.free && !m.paidOnly && !currentFilter.paid && m.paidOnly) return false;
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const provider = document.getElementById('providerFilter').value;
+      const type = document.getElementById('typeFilter').value;
+      const freeOnly = document.getElementById('freeOnly').checked;
+      const hidePreview = document.getElementById('hidePreview').checked;
+      const sortBySpeed = document.getElementById('sortBySpeed').checked;
+      
+      // Фильтрация
+      let filtered = allModels.filter(m => {
+        // Поиск
+        if (search && !m.label.toLowerCase().includes(search) && !m.id.toLowerCase().includes(search)) {
+          return false;
+        }
         
-        // Фильтр по провайдеру
-        if (currentFilter.provider !== 'all' && m.provider !== currentFilter.provider) return false;
+        // Провайдер
+        if (provider !== 'all' && m.provider !== provider) {
+          return false;
+        }
         
-        // Фильтр быстрых
-        if (currentFilter.fast && !m.label.includes('FAST') && !m.label.includes('LITE')) return false;
+        // Только бесплатные
+        if (freeOnly && m.paidOnly) {
+          return false;
+        }
+        
+        // Скрыть preview
+        if (hidePreview && m.label.toLowerCase().includes('preview')) {
+          return false;
+        }
+        
+        // Тип
+        if (type === 'fast' && !/fast|lite|flash/i.test(m.label)) {
+          return false;
+        }
+        if (type === 'power' && !/70b|pro|ultra|maverick/i.test(m.label)) {
+          return false;
+        }
+        if (type === 'preview' && !/preview|experimental/i.test(m.label)) {
+          return false;
+        }
         
         return true;
       });
       
       // Сортировка
-      filtered.sort((a, b) => {
-        if (currentFilter.sort === 'priority') return (b.priority || 0) - (a.priority || 0);
-        if (currentFilter.sort === 'newest') return (b.major || 0) - (a.major || 0) || (b.minor || 0) - (a.minor || 0);
-        if (currentFilter.sort === 'speed') {
-          const aSpeed = a.label.includes('LITE') ? 3 : a.label.includes('FAST') ? 2 : 1;
-          const bSpeed = b.label.includes('LITE') ? 3 : b.label.includes('FAST') ? 2 : 1;
-          return bSpeed - aSpeed;
-        }
-        if (currentFilter.sort === 'name') return (a.label || '').localeCompare(b.label || '');
-        return 0;
-      });
-      
-      if (filtered.length === 0) {
-        list.innerHTML = '<div class="empty-state"><h2>😕 Ничего не найдено</h2><p>Попробуйте изменить фильтры</p></div>';
-        return;
+      if (sortBySpeed) {
+        filtered.sort((a, b) => {
+          const priorityA = getModelPriority(a);
+          const priorityB = getModelPriority(b);
+          return priorityB - priorityA;
+        });
       }
       
-      list.innerHTML = filtered.map(m => {
-        const badges = [];
-        if (m.paidOnly) badges.push('<span class="model-badge paid">💰 Платная</span>');
-        else if (m.label.includes('LITE')) badges.push('<span class="model-badge fast">⚡ LITE</span>');
-        else if (m.label.includes('FAST')) badges.push('<span class="model-badge fast">⚡ FAST</span>');
-        if (m.label.includes('PREVIEW')) badges.push('<span class="model-badge preview">🔬 Preview</span>');
-        if (m.label.includes('LATEST')) badges.push('<span class="model-badge turbo">✨ Latest</span>');
-        
-        const providerClass = `provider-${m.provider}`;
-        const providerName = m.provider === 'gemini' ? '🔮 Gemini' : m.provider === 'openai' ? '🤖 OpenAI' : '⚡ Groq';
-        
-        return `
-          <div class="chat-item" onclick="selectModel('${m.id}')">
-            <h3>
-              <span class="${providerClass}">${providerName}</span>
-              ${badges.join(' ')}
-            </h3>
-            <div style="margin-top:8px; font-size:14px;">${m.label || m.id}</div>
-            <div class="meta">
-              <span>ID: ${m.id}</span>
-              ${m.reason ? `<span>⚠️ ${m.reason}</span>` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-    
-    function applyFilters() {
-      currentFilter.free = document.getElementById('filter-free').checked;
-      currentFilter.paid = document.getElementById('filter-paid').checked;
-      currentFilter.fast = document.getElementById('filter-fast').checked;
-      renderModels();
-    }
-    
-    function setProvider(provider) {
-      currentFilter.provider = provider;
-      document.querySelectorAll('.filter-buttons button').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.provider === provider) btn.classList.add('active');
+      // Группировка по провайдерам
+      const groups = {};
+      filtered.forEach(m => {
+        const group = m.provider === 'gemini' ? '🔮 Google Gemini' : 
+                     m.provider === 'groq' ? '⚡ Groq (быстрые)' : '🤖 Другие';
+        if (!groups[group]) groups[group] = [];
+        groups[group].push(m);
       });
-      renderModels();
-    }
-    
-    function setSort(sort) {
-      currentFilter.sort = sort;
-      document.querySelectorAll('.filter-buttons button').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.sort === sort) btn.classList.add('active');
+      
+      // Рендер
+      const container = document.getElementById('modelsList');
+      container.innerHTML = '';
+      
+      Object.entries(groups).forEach(([groupName, models]) => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'model-group';
+        
+        const title = document.createElement('div');
+        title.className = 'group-title';
+        title.textContent = `${groupName} (${models.length})`;
+        groupDiv.appendChild(title);
+        
+        models.forEach(m => {
+          const item = document.createElement('div');
+          item.className = 'model-item' + (m.paidOnly ? ' disabled' : '') + 
+                          (selectedModel === m.id ? ' selected' : '');
+          item.dataset.id = m.id;
+          
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'model-checkbox';
+          checkbox.checked = selectedModel === m.id;
+          checkbox.disabled = m.paidOnly;
+          checkbox.onchange = () => selectModel(m.id);
+          
+          const content = document.createElement('div');
+          content.className = 'model-content';
+          
+          const label = document.createElement('div');
+          label.className = 'model-label';
+          label.textContent = m.label || m.id;
+          
+          const meta = document.createElement('div');
+          meta.className = 'model-meta';
+          
+          // Добавляем бейджи
+          const badges = getModelBadges(m);
+          badges.forEach(badge => {
+            const span = document.createElement('span');
+            span.className = 'badge ' + badge.class;
+            span.textContent = badge.text;
+            meta.appendChild(span);
+          });
+          
+          if (m.paidOnly) {
+            const paid = document.createElement('span');
+            paid.style.color = '#ff8b94';
+            paid.textContent = '💰 Только платно';
+            meta.appendChild(paid);
+          }
+          
+          content.appendChild(label);
+          content.appendChild(meta);
+          
+          item.appendChild(checkbox);
+          item.appendChild(content);
+          item.onclick = (e) => {
+            if (e.target !== checkbox) selectModel(m.id);
+          };
+          
+          groupDiv.appendChild(item);
+        });
+        
+        container.appendChild(groupDiv);
       });
-      renderModels();
+      
+      document.getElementById('modelCount').textContent = 
+        `Показано: ${filtered.length} из ${allModels.length}`;
     }
     
-    function selectModel(modelId) {
-      localStorage.setItem('selectedModel', modelId);
-      alert('Выбрана модель: ' + modelId);
-      // Здесь можно добавить переключение на чат
-    }
-    
-    function newChat() {
-      // Создание нового чата
-    }
-    
-    function toggleSettings() {
-      const settings = document.getElementById('settings');
-      const overlay = document.getElementById('overlay');
-      if (settings.style.display === 'none') {
-        document.getElementById('workerUrl').value = localStorage.getItem('workerUrl') || '';
-        settings.style.display = 'block';
-        overlay.style.display = 'block';
-      } else {
-        settings.style.display = 'none';
-        overlay.style.display = 'none';
+    // Приоритет модели для сортировки
+    function getModelPriority(m) {
+      let score = 0;
+      const label = m.label.toLowerCase();
+      
+      // Провайдеры
+      if (m.provider === 'gemini') score += 100;
+      if (m.provider === 'groq') score += 90;
+      
+      // Типы моделей
+      if (/flash.*lite|lite.*flash/i.test(label)) score += 80;
+      else if (/flash/i.test(label)) score += 85;
+      else if (/70b|pro|ultra|maverick/i.test(label)) score += 75;
+      else if (/32b|3.3/i.test(label)) score += 70;
+      else if (/8b|instant/i.test(label)) score += 65;
+      
+      // Версии
+      if (/latest/i.test(label)) score += 50;
+      if (/preview|experimental/i.test(label)) score -= 20;
+      
+      // Версионность Gemini
+      const geminiVer = label.match(/gemini-(\d+)\.(\d+)/);
+      if (geminiVer) {
+        score += parseInt(geminiVer[1]) * 10 + parseInt(geminiVer[2]);
       }
+      
+      return score;
     }
     
-    function saveSettings() {
-      localStorage.setItem('workerUrl', document.getElementById('workerUrl').value);
-      toggleSettings();
-      loadModels();
+    // Бейджи для модели
+    function getModelBadges(m) {
+      const badges = [];
+      const label = m.label.toLowerCase();
+      
+      if (/fast|flash/i.test(label) && !/lite/i.test(label)) {
+        badges.push({ class: 'badge-fast', text: '⚡ FAST' });
+      }
+      if (/lite/i.test(label)) {
+        badges.push({ class: 'badge-lite', text: 'LITE' });
+      }
+      if (/pro|ultra/i.test(label)) {
+        badges.push({ class: 'badge-pro', text: '💰 PRO' });
+      }
+      if (/preview|experimental/i.test(label)) {
+        badges.push({ class: 'badge-preview', text: '🔬 PREVIEW' });
+      }
+      if (/latest/i.test(label)) {
+        badges.push({ class: 'badge-latest', text: '✨ LATEST' });
+      }
+      if (/70b|120b|maverick/i.test(label)) {
+        badges.push({ class: 'badge-70b', text: '⭐ 70B+' });
+      }
+      if (/8b|20b/i.test(label)) {
+        badges.push({ class: 'badge-8b', text: '⚡ 8B' });
+      }
+      if (!m.paidOnly) {
+        badges.push({ class: 'badge-free', text: '🆓' });
+      }
+      
+      return badges;
     }
     
-    // Инициализация
+    // Выбор модели
+    function selectModel(id) {
+      selectedModel = id;
+      renderModels();
+      document.getElementById('messageInput').disabled = false;
+      document.getElementById('sendBtn').disabled = false;
+      document.getElementById('messageInput').focus();
+    }
+    
+    // Отправка сообщения
+    document.getElementById('sendBtn').onclick = async () => {
+      const input = document.getElementById('messageInput');
+      const message = input.value.trim();
+      if (!message || !selectedModel) return;
+      
+      const messagesDiv = document.getElementById('chatMessages');
+      
+      // Добавляем сообщение пользователя
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user';
+      userMsg.textContent = message;
+      messagesDiv.appendChild(userMsg);
+      
+      input.value = '';
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      
+      // Отправляем запрос
+      try {
+        const res = await fetch(workerUrl + '/v1/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: selectedModel,
+            messages: [{ role: 'user', content: message }]
+          })
+        });
+        
+        const data = await res.json();
+        
+        const assistantMsg = document.createElement('div');
+        assistantMsg.className = 'message assistant';
+        assistantMsg.textContent = data.text || data.error || 'Ошибка';
+        messagesDiv.appendChild(assistantMsg);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      } catch (e) {
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'message assistant';
+        errorMsg.style.background = '#ff6b6b';
+        errorMsg.textContent = '❌ Ошибка: ' + e.message;
+        messagesDiv.appendChild(errorMsg);
+      }
+    };
+    
+    // Enter для отправки
+    document.getElementById('messageInput').onkeypress = (e) => {
+      if (e.key === 'Enter') document.getElementById('sendBtn').onclick();
+    };
+    
+    // Фильтры
+    ['searchInput', 'providerFilter', 'typeFilter', 'freeOnly', 'hidePreview', 'sortBySpeed']
+      .forEach(id => {
+        document.getElementById(id).onchange = renderModels;
+        document.getElementById(id).oninput = renderModels;
+      });
+    
+    // Загрузка при старте
     loadModels();
   </script>
 </body>
