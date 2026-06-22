@@ -2,15 +2,15 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
   <title>Gemini Workspace Hub</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     :root {
-      --bg-main: #131314;     /* Оригинальный темный фон Gemini */
-      --bg-sidebar: #1e1f20;  /* Фон сайдбара */
-      --bg-card: #282a2c;     /* Фон элементов ввода */
+      --bg-main: #131314;
+      --bg-sidebar: #1e1f20;
+      --bg-card: #282a2c;
       --text-main: #e3e3e3;
       --text-sec: #c4c7c5;
       --border-color: #444746;
@@ -29,17 +29,23 @@
       --user-msg-bg: #e3e3e3;
     }
 
-    body { background-color: var(--bg-main); color: var(--text-main); transition: all 0.2s ease; }
+    /* Используем dvh для корректной работы с мобильными браузерами */
+    body { 
+      height: 100vh;
+      height: 100dvh;
+      background-color: var(--bg-main); 
+      color: var(--text-main); 
+      transition: all 0.2s ease; 
+    }
+    
     .theme-sidebar { background-color: var(--bg-sidebar); border-color: var(--border-color); }
     .theme-card { background-color: var(--bg-card); border-color: var(--border-color); }
     .theme-text-sec { color: var(--text-sec); }
     .theme-border { border-color: var(--border-color); }
 
-    /* Скрытие скроллбара сайдбара */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    .chat-stream { height: calc(100vh - 140px); }
     .markdown-body pre { background: var(--code-bg); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 0.5rem 0; border: 1px solid var(--border-color); }
     .markdown-body code { font-family: monospace; background: rgba(148, 163, 184, 0.15); padding: 0.2rem 0.4rem; border-radius: 0.25rem; color: #ff6b6b; }
     body.light-theme .markdown-body code { color: #d946ef; }
@@ -47,19 +53,18 @@
     
     .badge { font-size: 0.65rem; font-weight: 600; padding: 0.1rem 0.4rem; border-radius: 0.25rem; }
     
-    /* Состояния сайдбара для мобилок */
     @media (max-width: 768px) {
       .sidebar-mobile { transform: translateX(-100%); transition: transform 0.2s ease-in-out; }
       .sidebar-mobile.active { transform: translateX(0); }
     }
   </style>
 </head>
-<body class="font-sans antialiased flex h-screen overflow-hidden">
+<body class="font-sans antialiased flex overflow-hidden">
 
   <aside id="sidebar" class="sidebar-mobile fixed inset-y-0 left-0 w-68 theme-sidebar border-r z-40 flex flex-col md:relative md:transform-none shadow-xl">
     <div class="p-4">
-      <button id="newChatBtn" class="w-full flex items-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-sm font-medium transition shadow-sm">
-        <span>svg+</span> ➕ Новый чат
+      <button id="newChatBtn" class="w-full flex items-center justify-center gap-3 px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-full text-sm font-medium transition shadow-sm">
+        ➕ Новый чат
       </button>
     </div>
 
@@ -76,15 +81,15 @@
     <div class="flex-1 overflow-y-auto no-scrollbar px-2 space-y-1" id="chatSessionsContainer">
       </div>
 
-    <div class="p-4 border-t theme-border space-y-2 text-xs font-medium">
+    <div class="p-4 border-t theme-border space-y-2 text-xs font-medium flex-none">
       <button id="themeToggleBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-700 hover:text-white transition">
-        🌗 Сменить тему оформления
+        🌗 Сменить тему
       </button>
       <button id="exportChatBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-700 hover:text-white transition">
         💾 Экспорт диалога (.md)
       </button>
       <button id="clearAllBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-400 hover:bg-red-900/30 transition">
-        🗑️ Очистить всю историю
+        🗑️ Очистить историю
       </button>
     </div>
   </aside>
@@ -93,7 +98,7 @@
 
   <main class="flex-1 flex flex-col h-full overflow-hidden relative">
     
-    <header class="theme-card border-b theme-border p-3 flex items-center justify-between gap-4 shadow-sm z-10">
+    <header class="theme-card border-b theme-border p-3 flex items-center justify-between gap-4 shadow-sm z-10 flex-none">
       <div class="flex items-center gap-3">
         <button id="burgerBtn" class="md:hidden p-2 rounded-lg hover:bg-gray-700 transition focus:outline-none">
           ☰
@@ -119,16 +124,17 @@
       </div>
     </header>
 
-    <div id="chatWindow" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 chat-stream">
+    <div id="chatWindow" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
       <div id="layoutWrapper" class="max-w-3xl mx-auto w-full space-y-6">
         </div>
     </div>
 
-    <div class="p-4 w-full max-w-3xl mx-auto sticky bottom-0 bg-transparent">
+    <div class="p-4 w-full max-w-3xl mx-auto flex-none pb-6">
       <div id="filePreviewContainer" class="flex flex-wrap gap-2 mb-2 px-2"></div>
       
-      <div class="theme-card border theme-border rounded-3xl p-2 flex items-end gap-2 shadow-xl relative backdrop-blur-md">
-        <label class="p-3 rounded-full hover:bg-gray-500/20 cursor-pointer transition flex items-center justify-center text-blue-400 shrink-0" title="Прикрепить схемы/логи (Только Gemini)">
+      <div class="theme-card border theme-border rounded-3xl p-2 flex items-end gap-2 shadow-xl relative">
+        
+        <label class="p-3 rounded-full hover:bg-gray-500/30 bg-gray-500/10 cursor-pointer transition flex items-center justify-center text-blue-400 shrink-0 mb-0.5" title="Прикрепить схемы/логи (Только Gemini)">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
           </svg>
@@ -137,7 +143,7 @@
 
         <textarea id="promptInput" rows="1" class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm p-2.5 resize-none overflow-y-auto max-h-40" placeholder="Введите запрос к ИИ..."></textarea>
         
-        <button id="sendBtn" class="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full transition flex items-center justify-center shadow-md shrink-0">
+        <button id="sendBtn" class="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full transition flex items-center justify-center shadow-md shrink-0 mb-0.5">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l92 2-9-18-9 18 9-2zm0 0v-8" />
           </svg>
@@ -150,16 +156,14 @@
   <script>
     const WORKER_URL = 'https://chat-ai-proxy.zenitogk.workers.dev';
 
-    // Структура данных многосессионного хранилища
     let chats = JSON.parse(localStorage.getItem('gemini_hub_chats')) || {};
     let currentChatId = localStorage.getItem('gemini_hub_current_id') || '';
     
     let attachedFiles = [];
     let allModelsData = [];
     let currentFilter = 'all';
-    let activeLoaders = {}; // Стейт активных запросов во избежание сбоев отрисовки
+    let activeLoaders = {}; 
 
-    // Элементы UI
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     const burgerBtn = document.getElementById('burgerBtn');
@@ -184,11 +188,9 @@
     const exportChatBtn = document.getElementById('exportChatBtn');
     const clearAllBtn = document.getElementById('clearAllBtn');
 
-    // --- Логика Управления Сайдбаром (Мобильная адаптация) ---
     burgerBtn.onclick = () => { sidebar.classList.add('active'); sidebarOverlay.classList.remove('hidden'); };
     sidebarOverlay.onclick = () => { sidebar.classList.remove('active'); sidebarOverlay.classList.add('hidden'); };
 
-    // --- Настройки сессий ---
     themeToggleBtn.onclick = () => {
       document.body.classList.toggle('light-theme');
       localStorage.setItem('gemini_hub_theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
@@ -218,7 +220,6 @@
       a.click();
     };
 
-    // --- Работа с сессиями чатов ---
     function createNewSession() {
       const id = 'chat_' + Date.now();
       chats[id] = { title: 'Новый диалог', history: [] };
@@ -270,7 +271,6 @@
       else { renderSidebarSessions(); renderActiveChat(); }
     }
 
-    // --- Матрица анализа возможностей ---
     function evaluateCapabilities(modelId) {
       const id = modelId.toLowerCase();
       const isGemini = id.includes('gemini');
@@ -290,7 +290,6 @@
       if(caps.power) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-red-600 text-white">🧠 High Logics</span>');
     }
 
-    // --- Спецификация Фильтров ---
     async function loadModels() {
       try {
         const res = await fetch(`${WORKER_URL}/v1/models`);
@@ -338,7 +337,6 @@
     modelSelect2.onchange = (e) => drawCapabilitiesBadges(e.target.value, capabilities2);
     compareModeCheck.onchange = () => { model2Wrapper.classList.toggle('hidden', !compareModeCheck.checked); renderActiveChat(); };
 
-    // --- Интеллектуальный рендерер Архитектуры вывода ---
     function renderActiveChat() {
       layoutWrapper.innerHTML = '';
       const isCompare = compareModeCheck.checked;
@@ -349,10 +347,8 @@
         history.forEach(msg => {
           layoutWrapper.insertAdjacentHTML('beforeend', createMessageHtml(msg));
         });
-        // Добавление лоадеров, если они запущены в стейте
         if(activeLoaders['track1']) layoutWrapper.insertAdjacentHTML('beforeend', createLoaderHtml(activeLoaders['track1']));
       } else {
-        // Режим Сравнения: Грид делит экран 50/50 на ПК и складывает вертикально на телефонах
         layoutWrapper.className = "max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-start";
         
         const track1Col = document.createElement('div'); track1Col.className = "space-y-4 border-b md:border-b-0 md:border-r theme-border pb-6 md:pb-0 md:pr-4";
@@ -415,7 +411,6 @@
         </div>`;
     }
 
-    // --- Обработка ввода и отправки ---
     fileInput.addEventListener('change', async (e) => {
       for (let file of e.target.files) {
         const base64Data = await convertToBase64(file);
@@ -468,7 +463,6 @@
       renderActiveChat();
       attachedFiles = []; renderFilePreviews();
 
-      // Параллельное выполнение запросов без перезаписи лоадеров сторонних треков
       const tasks = [executeRequest(m1, 'track1')];
       if(isCompare) tasks.push(executeRequest(m2, 'track2'));
       await Promise.all(tasks);
@@ -513,7 +507,6 @@
       this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';
     });
 
-    // Инициализация
     if(!currentChatId || !chats[currentChatId]) createNewSession();
     loadModels();
     renderSidebarSessions();
