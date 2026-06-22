@@ -1,440 +1,393 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Чат-АИ</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg: #ffffff;
-  --sidebar-bg: #f7f7f8;
-  --border: #e5e5e7;
-  --text: #1a1a1a;
-  --text-secondary: #6e6e73;
-  --hover: #ececee;
-  --accent: #615ced;
-  --accent-hover: #4f4ce0;
-  --msg-user: #f0f0f2;
-  --msg-ai: transparent;
-  --code-bg: #f5f5f7;
-  --error: #cf222e;
-  --ok: #1a7f37;
-  --shadow: rgba(0,0,0,0.05);
-}
-
-[data-theme="dark"] {
-  --bg: #0f1115;
-  --sidebar-bg: #181a20;
-  --border: #2a2d35;
-  --text: #e6e8ee;
-  --text-secondary: #9ba0aa;
-  --hover: #232730;
-  --accent: #7c7cf5;
-  --accent-hover: #615ced;
-  --msg-user: #232730;
-  --msg-ai: transparent;
-  --code-bg: #232730;
-  --error: #ff7b72;
-  --ok: #4ac26b;
-  --shadow: rgba(0,0,0,0.3);
-}
-
-html, body { height: 100%; overflow: hidden; }
-body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.55; }
-
-/* ===== Layout ===== */
-.app { display: flex; height: 100vh; }
-
-/* ===== Sidebar ===== */
-.sidebar { width: 280px; background: var(--sidebar-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; transition: transform 0.3s ease; }
-.sidebar-header { padding: 14px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
-.sidebar-header h1 { font-size: 16px; font-weight: 600; flex: 1; display: flex; align-items: center; gap: 6px; }
-.icon-btn { background: transparent; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; color: var(--text-secondary); font-size: 14px; padding: 6px 10px; transition: all 0.2s; }
-.icon-btn:hover { background: var(--hover); color: var(--text); }
-.new-chat-btn { width: calc(100% - 28px); padding: 12px 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; margin: 12px 14px; display: flex; align-items: center; gap: 8px; }
-.new-chat-btn:hover { background: var(--accent-hover); }
-
-.chat-list { flex: 1; overflow-y: auto; padding: 0 8px 8px; }
-.chat-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-.chat-item:hover { background: var(--hover); }
-.chat-item.active { background: var(--hover); font-weight: 500; }
-.chat-item .del { opacity: 0; font-size: 12px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
-.chat-item:hover .del { opacity: 1; }
-.chat-item .del:hover { color: var(--error); }
-.chat-item .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-
-.sidebar-footer { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; }
-.sidebar-footer button { flex: 1; min-width: 70px; }
-
-/* ===== Main ===== */
-.main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
-
-.header { padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; flex-wrap: wrap; gap: 10px; background: var(--bg); z-index: 2; }
-.menu-btn { display: none; background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 16px; color: var(--text); }
-.model-select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 14px; cursor: pointer; flex: 1; min-width: 140px; max-width: 250px; }
-.cat-select { background: var(--sidebar-bg); font-weight: 500; }
-.compare-toggle { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
-
-.status { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; margin-left: auto; }
-.status.err { color: var(--error); }
-.status.ok { color: var(--ok); }
-.status .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-
-.proxy-bar { background: var(--sidebar-bg); border-bottom: 1px solid var(--border); padding: 10px 18px; display: none; gap: 8px; align-items: center; flex-wrap: wrap; }
-.proxy-bar.show { display: flex; }
-.proxy-bar input { flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 13px; }
-.proxy-bar button { padding: 8px 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; }
-.proxy-bar button:hover { background: var(--accent-hover); }
-
-/* ===== Chat area ===== */
-.chat-area { flex: 1; overflow-y: auto; padding: 24px 18px; display: flex; flex-direction: column; }
-.welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--text-secondary); gap: 12px; }
-.welcome h1 { font-size: 28px; font-weight: 600; color: var(--text); }
-.messages { max-width: 820px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
-
-.message { display: flex; gap: 12px; }
-.message.user { flex-direction: row-reverse; }
-.message .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white; display: grid; place-items: center; font-size: 16px; flex-shrink: 0; }
-.message.user .avatar { background: var(--msg-user); color: var(--text); }
-.message .bubble { background: var(--msg-user); padding: 10px 14px; border-radius: 14px; max-width: calc(100% - 50px); overflow-wrap: anywhere; word-break: break-word; }
-.message.assistant .bubble { background: transparent; padding-left: 0; width: 100%; }
-.message .meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; display: flex; gap: 6px; align-items: center; }
-
-/* Markdown Styles */
-.message .content pre { background: var(--code-bg); padding: 12px; border-radius: 8px; overflow-x: auto; margin: 10px 0; font-family: monospace; font-size: 13px; border: 1px solid var(--border); }
-.message .content code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
-.message .content pre code { background: transparent; padding: 0; border: none; }
-.message .content p { margin: 8px 0; }
-.message .content ul { margin: 8px 0; padding-left: 20px; }
-.message .content table { border-collapse: collapse; margin: 10px 0; width: 100%; }
-.message .content th, .message .content td { border: 1px solid var(--border); padding: 6px 10px; }
-
-/* ===== Composer ===== */
-.composer { border-top: 1px solid var(--border); padding: 12px 18px; background: var(--bg); }
-.file-preview-area { max-width: 820px; margin: 0 auto 8px auto; display: flex; gap: 8px; flex-wrap: wrap; }
-.file-badge { background: var(--hover); padding: 4px 10px; border-radius: 12px; font-size: 12px; display: flex; align-items: center; gap: 6px; border: 1px solid var(--border); }
-.file-badge button { background: transparent; border: none; color: var(--error); cursor: pointer; font-weight: bold; }
-.composer-inner { max-width: 820px; margin: 0 auto; display: flex; gap: 8px; align-items: flex-end; }
-
-#input { flex: 1; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; font: inherit; background: var(--bg); color: var(--text); resize: none; min-height: 44px; max-height: 200px; }
-#input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-
-.action-btn { width: 44px; height: 44px; background: var(--hover); color: var(--text); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-size: 18px; display: grid; place-items: center; flex-shrink: 0; transition: 0.2s; }
-.action-btn:hover { background: var(--border); }
-.send-btn { background: var(--accent); color: white; border: none; }
-.send-btn:hover:not(:disabled) { background: var(--accent-hover); }
-.send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-@media (max-width: 720px) {
-  .sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 10; transform: translateX(-100%); box-shadow: 2px 0 12px var(--shadow); }
-  .sidebar.open { transform: translateX(0); }
-  .menu-btn { display: inline-block; }
-  .model-select { flex-basis: 100%; max-width: 100%; }
-}
-.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 8px; font-size: 13px; z-index: 20; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-.toast.show { opacity: 1; }
-.toast.err { background: var(--error); color: white; }
-</style>
-</head>
-<body>
-
-<div class="app">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <h1>💬 Чат-АИ</h1>
-      <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Тема">🌙</button>
-    </div>
-    <button class="new-chat-btn" onclick="newChat()">＋ Новый чат</button>
-    <div class="chat-list" id="chatList"></div>
-    <div class="sidebar-footer">
-      <button class="icon-btn" onclick="toggleProxyBar()" title="Настройки прокси">⚙️</button>
-      <button class="icon-btn" onclick="refreshModels()" title="Обновить список моделей">🔄</button>
-      <button class="icon-btn" onclick="exportChat()" title="Экспорт текущего чата в .md">⬇️</button>
-      <button class="icon-btn" onclick="clearAll()" title="Удалить все чаты">🗑</button>
-    </div>
-  </aside>
-
-  <main class="main">
-    <div class="header">
-      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-      <select class="model-select cat-select" id="catSelect" onchange="filterModels()">
-        <option value="all">🌐 Все модели</option>
-      </select>
-      
-      <select class="model-select" id="modelSelect" onchange="saveModel()"></select>
-
-      <label class="compare-toggle" title="Отправить запрос сразу двум моделям">
-        <input type="checkbox" id="compareMode" onchange="toggleCompareMode()"> Сравнение
-      </label>
-      
-      <select class="model-select" id="modelSelect2" style="display:none"></select>
-
-      <div class="status" id="status"><span class="dot"></span><span id="statusText">…</span></div>
-    </div>
+  <meta charset="UTF-8">
+  <title>AI Workspace Dual & Multimodal</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    /* Базовые переменные для тем */
+    :root {
+      --bg-main: #111827; /* gray-900 */
+      --bg-sec: #1f2937; /* gray-800 */
+      --bg-third: #374151; /* gray-700 */
+      --text-main: #f3f4f6; /* gray-100 */
+      --text-sec: #9ca3af; /* gray-400 */
+      --border-color: #374151; /* gray-700 */
+      --code-bg: #1f2937;
+    }
     
-    <div class="proxy-bar" id="proxyBar">
-      <input id="proxyInput" placeholder="https://chat-ai-proxy.zenitogk.workers.dev" />
-      <button onclick="saveProxy()">Сохранить</button>
-    </div>
+    body.light-theme {
+      --bg-main: #f3f4f6; /* gray-100 */
+      --bg-sec: #ffffff; /* white */
+      --bg-third: #e5e7eb; /* gray-200 */
+      --text-main: #111827; /* gray-900 */
+      --text-sec: #4b5563; /* gray-600 */
+      --border-color: #d1d5db; /* gray-300 */
+      --code-bg: #e5e7eb;
+    }
 
-    <div class="chat-area" id="chatArea">
-      <div class="welcome" id="welcome">
-        <h1>Привет!</h1>
-        <p>Выбери модель, прикрепи файлы или включи режим сравнения.</p>
+    body { background-color: var(--bg-main); color: var(--text-main); transition: all 0.3s; }
+    .theme-bg-sec { background-color: var(--bg-sec); border-color: var(--border-color); }
+    .theme-bg-third { background-color: var(--bg-third); border-color: var(--border-color); color: var(--text-main); }
+    .theme-text-sec { color: var(--text-sec); }
+    .theme-border { border-color: var(--border-color); }
+
+    .chat-container { height: calc(100vh - 180px); }
+    .markdown-body pre { background: var(--code-bg); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0; }
+    .markdown-body code { font-family: monospace; background: rgba(156, 163, 175, 0.2); padding: 0.2rem 0.4rem; border-radius: 0.25rem; color: #ef4444; }
+    .markdown-body pre code { color: inherit; background: transparent; padding: 0; }
+    
+    /* Модальное окно настроек */
+    #settingsModal { display: none; }
+    #settingsModal.active { display: flex; }
+  </style>
+</head>
+<body class="font-sans">
+
+  <header class="theme-bg-sec border-b theme-border p-4 sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <h1 class="text-xl font-bold text-blue-500 flex items-center gap-2">🚀 AI Hub <span class="text-xs theme-text-sec">v2.1</span></h1>
+      
+      <div class="flex items-center flex-wrap gap-4">
+        
+        <div class="flex flex-col">
+          <span class="text-xs theme-text-sec font-bold mb-0.5">Категория</span>
+          <select id="categoryFilter" class="theme-bg-third text-sm rounded-lg p-2 border focus:outline-none focus:border-blue-500 w-32">
+            <option value="all">Все модели</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col">
+          <span class="text-xs theme-text-sec font-bold mb-0.5">Модель 1 (Основная)</span>
+          <select id="modelSelect1" class="theme-bg-third text-sm rounded-lg p-2 border focus:outline-none focus:border-blue-500 w-64"></select>
+        </div>
+
+        <label class="flex items-center gap-2 theme-bg-third px-3 py-2 rounded-lg cursor-pointer hover:opacity-80 transition mt-4">
+          <input type="checkbox" id="compareMode" class="form-checkbox text-blue-500 rounded">
+          <span class="text-sm font-medium">🌓 Сравнение</span>
+        </label>
+
+        <div id="model2Wrapper" class="flex flex-col hidden">
+          <span class="text-xs theme-text-sec font-bold mb-0.5">Модель 2</span>
+          <select id="modelSelect2" class="theme-bg-third text-sm rounded-lg p-2 border focus:outline-none focus:border-green-500 w-64"></select>
+        </div>
+
+        <button id="settingsBtn" class="theme-bg-third p-2 rounded-lg hover:opacity-80 transition mt-4 border theme-border" title="Настройки">
+          ⚙️
+        </button>
       </div>
-      <div class="messages" id="messages" style="display:none"></div>
     </div>
+  </header>
 
-    <div class="composer">
-      <div class="file-preview-area" id="filePreviewArea"></div>
-      <div class="composer-inner">
-        <button class="action-btn" onclick="document.getElementById('fileInput').click()" title="Прикрепить файл">📎</button>
-        <input type="file" id="fileInput" multiple style="display:none" onchange="handleFiles(this.files)">
-        
-        <textarea id="input" rows="1" placeholder="Спроси что-нибудь… (Текстовые файлы читают все ИИ)" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
-        
-        <button class="action-btn send-btn" onclick="send()" id="sendBtn" title="Отправить">➤</button>
+  <div id="settingsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
+    <div class="theme-bg-sec p-6 rounded-xl shadow-lg w-96 border theme-border">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold">Настройки</h2>
+        <button id="closeSettings" class="text-red-400 font-bold text-xl">&times;</button>
+      </div>
+      <div class="space-y-4">
+        <button id="refreshModelsBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg transition">
+          🔄 Обновить список моделей
+        </button>
+        <button id="exportChatBtn" class="w-full bg-green-600 hover:bg-green-500 text-white py-2 rounded-lg transition">
+          💾 Экспорт чата (Markdown)
+        </button>
+        <button id="themeToggleBtn" class="w-full theme-bg-third py-2 rounded-lg transition border theme-border">
+          🌗 Переключить тему
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto p-4">
+    <div id="chatWindow" class="chat-container overflow-y-auto space-y-4 pr-2 flex gap-4 items-start">
+      <div id="singleTrack" class="w-full space-y-4"></div>
+      
+      <div id="compareTrack1" class="w-1/2 space-y-4 hidden border-r theme-border pr-4">
+        <div class="text-center text-xs font-bold text-blue-500 tracking-wider uppercase border-b theme-border pb-2 mb-2">Модель 1</div>
+      </div>
+      <div id="compareTrack2" class="w-1/2 space-y-4 hidden pl-2">
+        <div class="text-center text-xs font-bold text-green-500 tracking-wider uppercase border-b theme-border pb-2 mb-2">Модель 2</div>
       </div>
     </div>
   </main>
-</div>
 
-<div class="toast" id="toast"></div>
-
-<script>
-'use strict';
-
-const LS = { proxy: 'chat_proxy_url', model: 'chat_model', chats: 'chat_chats', theme: 'chat_theme' };
-function getLS(key, def) { try { return localStorage.getItem(key) || def; } catch { return def; } }
-function setLS(key, val) { try { localStorage.setItem(key, val); } catch {} }
-function $(id) { return document.getElementById(id); }
-
-let chats = JSON.parse(getLS(LS.chats, '{}')) || {};
-let currentChatId = null;
-let allModels = [];
-let proxyUrl = '';
-let attachedFiles = []; 
-
-function toast(text, kind) {
-  const t = $('toast');
-  t.textContent = text;
-  t.className = 'toast show' + (kind === 'err' ? ' err' : '');
-  setTimeout(() => { t.className = 'toast'; }, 3000);
-}
-function setStatus(text, kind) {
-  $('statusText').textContent = text;
-  $('status').className = 'status' + (kind ? ' ' + kind : '');
-}
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text == null ? '' : String(text);
-  return div.innerHTML;
-}
-function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 200) + 'px'; }
-function handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }
-
-function toggleTheme() {
-  const cur = document.documentElement.getAttribute('data-theme') || 'light';
-  const next = cur === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  setLS(LS.theme, next);
-  $('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
-}
-
-function loadProxy() {
-  proxyUrl = (getLS(LS.proxy, '') || '').trim();
-  $('proxyInput').value = proxyUrl;
-  if (!proxyUrl) toggleProxyBar(true);
-}
-function saveProxy() {
-  proxyUrl = $('proxyInput').value.trim();
-  setLS(LS.proxy, proxyUrl);
-  toggleProxyBar(false);
-  loadModels();
-}
-function toggleProxyBar(force) { $('proxyBar').classList.toggle('show', force); }
-
-function toggleCompareMode() {
-  const isChecked = $('compareMode').checked;
-  $('modelSelect2').style.display = isChecked ? 'block' : 'none';
-}
-
-async function loadModels() {
-  if (!proxyUrl) return;
-  try {
-    const r = await fetch(proxyUrl + '/v1/models');
-    const data = await r.json();
-    allModels = data.models || [];
-    filterModels();
-  } catch (e) { toast('Ошибка загрузки моделей', 'err'); }
-}
-
-function filterModels() {
-  const cat = $('catSelect').value;
-  let models = allModels.filter(m => cat === 'all' || m.category === cat);
-  
-  let html = models.map(m => `<option value="${m.id}">${m.label}</option>`).join('');
-  $('modelSelect').innerHTML = html;
-  $('modelSelect2').innerHTML = html;
-  
-  if (models.length > 1) $('modelSelect2').selectedIndex = 1;
-  const savedModel = getLS(LS.model, '');
-  if (savedModel && models.find(m => m.id === savedModel)) $('modelSelect').value = savedModel;
-}
-function saveModel() { setLS(LS.model, $('modelSelect').value); }
-function refreshModels() { loadModels(); }
-
-function loadChatList() {
-  const list = $('chatList');
-  const entries = Object.entries(chats).sort((a, b) => b[1].updated - a[1].updated);
-  list.innerHTML = entries.map(([id, chat]) => `
-    <div class="chat-item ${id === currentChatId ? 'active' : ''}" onclick="loadChat('${id}')">
-      <span class="label">${escapeHtml(chat.title)}</span>
-      <button class="del" onclick="event.stopPropagation();deleteChat('${id}')">✕</button>
-    </div>`).join('');
-}
-function newChat() { currentChatId = null; $('welcome').style.display = 'flex'; $('messages').style.display = 'none'; $('messages').innerHTML = ''; }
-function deleteChat(id) { delete chats[id]; saveChats(); loadChatList(); newChat(); }
-function loadChat(id) { currentChatId = id; renderMessages(chats[id].messages); loadChatList(); }
-function saveChats() { setLS(LS.chats, JSON.stringify(chats)); }
-
-// === ОБРАБОТКА ФАЙЛОВ ===
-async function handleFiles(files) {
-  for (let file of files) {
-    const isImage = file.type.startsWith('image/');
-    // Читаем файл как текст (для Groq/Llama/Qwen) или как Base64 (для картинок в Gemini)
-    const data = isImage ? await readAsBase64(file) : await readAsText(file);
-    attachedFiles.push({ name: file.name, type: file.type, isImage: isImage, data: data });
-  }
-  renderFilePreview();
-}
-
-function readAsText(file) {
-  return new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsText(file); });
-}
-function readAsBase64(file) {
-  return new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.readAsDataURL(file); });
-}
-
-function renderFilePreview() {
-  const area = $('filePreviewArea');
-  area.innerHTML = attachedFiles.map((f, i) => `
-    <div class="file-badge">📎 ${f.name} <button onclick="removeFile(${i})">✕</button></div>
-  `).join('');
-}
-function removeFile(index) { attachedFiles.splice(index, 1); renderFilePreview(); }
-
-// === ОТПРАВКА ===
-async function send() {
-  let text = $('input').value.trim();
-  if (!text && attachedFiles.length === 0) return;
-
-  if (!currentChatId) {
-    currentChatId = 'chat_' + Date.now();
-    chats[currentChatId] = { title: text.slice(0, 40) || 'Анализ файлов', messages: [], updated: Date.now() };
-  }
-  const chat = chats[currentChatId];
-
-  // Формируем текст с учетом прикрепленных текстовых файлов, чтобы Llama и Qwen могли их прочитать
-  let combinedText = text;
-  let hasImages = false;
-  
-  attachedFiles.forEach(f => {
-    if (!f.isImage) {
-      combinedText += `\n\n--- Содержимое файла: ${f.name} ---\n${f.data}\n--- Конец файла ---`;
-    } else {
-      hasImages = true;
-    }
-  });
-
-  const parts = [{ text: combinedText }];
-  attachedFiles.filter(f => f.isImage).forEach(f => {
-    parts.push({ inlineData: { mimeType: f.type, data: f.data } });
-  });
-
-  const userMsg = { role: 'user', content: combinedText, parts: parts, displayFiles: attachedFiles.map(f=>f.name), timestamp: Date.now() };
-  chat.messages.push(userMsg);
-  
-  $('input').value = ''; autoResize($('input'));
-  attachedFiles = []; renderFilePreview();
-  
-  renderMessages(chat.messages);
-
-  const model1 = $('modelSelect').value;
-  const model2 = $('modelSelect2').value;
-  const isDual = $('compareMode').checked;
-
-  if (hasImages && isDual && !model2.includes('gemini')) {
-    toast('Внимание: Картинки понимает только Gemini.', 'err');
-  }
-
-  // Параллельный запуск
-  const tasks = [fetchAI(model1, chat.messages)];
-  if (isDual) tasks.push(fetchAI(model2, chat.messages));
-
-  $('sendBtn').disabled = true;
-  
-  const results = await Promise.all(tasks);
-  
-  results.forEach(res => {
-    chat.messages.push({ role: 'assistant', content: res.text, model: res.model, timestamp: Date.now() });
-  });
-
-  chat.updated = Date.now();
-  saveChats();
-  loadChatList();
-  renderMessages(chat.messages);
-  $('sendBtn').disabled = false;
-}
-
-async function fetchAI(modelId, messages) {
-  try {
-    const r = await fetch(proxyUrl + '/v1/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: modelId, messages: messages })
-    });
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error || 'Ошибка');
-    return { text: data.text, model: modelId };
-  } catch (e) {
-    return { text: '⚠️ Ошибка: ' + e.message, model: modelId };
-  }
-}
-
-function renderMessages(messages) {
-  $('welcome').style.display = 'none';
-  const div = $('messages');
-  div.style.display = 'flex';
-  div.innerHTML = messages.map(msg => {
-    const isUser = msg.role === 'user';
-    let fileInfo = '';
-    if (isUser && msg.displayFiles && msg.displayFiles.length > 0) {
-      fileInfo = `<div style="font-size:12px; color:var(--accent); margin-top:8px;">📎 Прикреплено: ${msg.displayFiles.join(', ')}</div>`;
-    }
-    const body = isUser ? escapeHtml(msg.content) : marked.parse(msg.content);
-    return `
-      <div class="message ${isUser ? 'user' : 'assistant'}">
-        <div class="avatar">${isUser ? '🧑' : '🤖'}</div>
-        <div style="width:100%">
-          <div class="meta">${escapeHtml(isUser ? 'Ты' : msg.model)}</div>
-          <div class="bubble"><div class="content">${body}</div>${fileInfo}</div>
-        </div>
+  <footer class="fixed bottom-0 left-0 w-full theme-bg-sec border-t theme-border p-4">
+    <div class="max-w-4xl mx-auto">
+      <div id="filePreviewContainer" class="flex flex-wrap gap-2 mb-2"></div>
+      <div class="flex items-center gap-2">
+        <label class="theme-bg-third hover:opacity-80 p-3 rounded-xl cursor-pointer transition flex items-center justify-center shadow" title="Прикрепить файл (Только для Gemini)">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+          </svg>
+          <input type="file" id="fileInput" class="hidden" multiple>
+        </label>
+        <textarea id="promptInput" rows="1" class="flex-1 theme-bg-third rounded-xl p-3 border focus:outline-none focus:border-blue-500 resize-none shadow" placeholder="Напишите запрос... (Файлы поддерживают только модели Gemini)"></textarea>
+        <button id="sendBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl transition shadow flex items-center justify-center">
+          Отправить
+        </button>
       </div>
-    `;
-  }).join('');
-  setTimeout(() => $('chatArea').scrollTop = $('chatArea').scrollHeight, 10);
-}
+    </div>
+  </footer>
 
-document.documentElement.setAttribute('data-theme', getLS(LS.theme, 'light'));
-loadProxy();
-if(proxyUrl) loadModels();
-loadChatList();
-</script>
+  <script>
+    // === ВСТАВЬ СЮДА СВОЙ URL ===
+    const WORKER_URL = 'https://your-worker.your-subdomain.workers.dev';
+
+    let attachedFiles = [];
+    let chatHistory = [];
+    let allModelsData = []; // Сохраняем все модели для фильтрации
+
+    const compareModeCheck = document.getElementById('compareMode');
+    const model2Wrapper = document.getElementById('model2Wrapper');
+    const singleTrack = document.getElementById('singleTrack');
+    const compareTrack1 = document.getElementById('compareTrack1');
+    const compareTrack2 = document.getElementById('compareTrack2');
+    const modelSelect1 = document.getElementById('modelSelect1');
+    const modelSelect2 = document.getElementById('modelSelect2');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const fileInput = document.getElementById('fileInput');
+    const filePreviewContainer = document.getElementById('filePreviewContainer');
+    const promptInput = document.getElementById('promptInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatWindow = document.getElementById('chatWindow');
+
+    // Элементы настроек
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettings = document.getElementById('closeSettings');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const exportChatBtn = document.getElementById('exportChatBtn');
+    const refreshModelsBtn = document.getElementById('refreshModelsBtn');
+
+    // --- Настройки и UI ---
+    settingsBtn.onclick = () => settingsModal.classList.add('active');
+    closeSettings.onclick = () => settingsModal.classList.remove('active');
+    window.onclick = (e) => { if(e.target === settingsModal) settingsModal.classList.remove('active'); };
+
+    themeToggleBtn.onclick = () => {
+      document.body.classList.toggle('light-theme');
+      const isLight = document.body.classList.contains('light-theme');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    };
+
+    if(localStorage.getItem('theme') === 'light') document.body.classList.add('light-theme');
+
+    exportChatBtn.onclick = () => {
+      if (chatHistory.length === 0) return alert('История чата пуста!');
+      let mdContent = "# История чата (AI Hub)\n\n";
+      chatHistory.forEach(msg => {
+        const role = msg.role === 'user' ? '👤 **Вы**' : '🤖 **AI**';
+        mdContent += `${role}:\n${msg.content}\n\n---\n\n`;
+      });
+      const blob = new Blob([mdContent], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `chat_export_${new Date().toISOString().slice(0,10)}.md`;
+      a.click();
+      settingsModal.classList.remove('active');
+    };
+
+    refreshModelsBtn.onclick = () => {
+      loadModels();
+      settingsModal.classList.remove('active');
+    };
+
+    // --- Логика Моделей и Фильтрации ---
+    async function loadModels() {
+      try {
+        const res = await fetch(`${WORKER_URL}/v1/models`);
+        const data = await res.json();
+        allModelsData = data.models || [];
+        
+        // Собираем уникальные категории из воркера
+        const categories = [...new Set(allModelsData.map(m => m.category).filter(Boolean))];
+        categoryFilter.innerHTML = '<option value="all">Все модели</option>';
+        categories.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          const names = { 'fast': 'Быстрые', 'standard': 'Стандартные', 'reasoning': 'Рассуждающие', 'latest': 'Новейшие', 'stable': 'Стабильные', 'qwen': 'Qwen' };
+          opt.textContent = names[cat] || cat;
+          categoryFilter.appendChild(opt);
+        });
+
+        renderModelSelects('all');
+      } catch (e) {
+        alert('Ошибка подключения к воркеру. Проверьте WORKER_URL.');
+      }
+    }
+
+    function renderModelSelects(filterCategory) {
+      const filtered = filterCategory === 'all' 
+        ? allModelsData 
+        : allModelsData.filter(m => m.category === filterCategory);
+
+      [modelSelect1, modelSelect2].forEach((select, idx) => {
+        const currentVal = select.value;
+        select.innerHTML = '';
+        filtered.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = m.label;
+          select.appendChild(opt);
+        });
+        // Пытаемся восстановить выбор или выбираем разные модели для 1 и 2
+        if(currentVal && filtered.find(m => m.id === currentVal)) {
+          select.value = currentVal;
+        } else if (idx === 1 && select.options.length > 1) {
+          select.selectedIndex = 1;
+        }
+      });
+    }
+
+    categoryFilter.addEventListener('change', (e) => renderModelSelects(e.target.value));
+
+    // --- Режимы и Файлы ---
+    compareModeCheck.addEventListener('change', (e) => {
+      model2Wrapper.classList.toggle('hidden', !e.target.checked);
+      singleTrack.classList.toggle('hidden', e.target.checked);
+      compareTrack1.classList.toggle('hidden', !e.target.checked);
+      compareTrack2.classList.toggle('hidden', !e.target.checked);
+      
+      chatWindow.innerHTML = '';
+      if(e.target.checked) {
+        chatWindow.appendChild(compareTrack1);
+        chatWindow.appendChild(compareTrack2);
+      } else {
+        chatWindow.appendChild(singleTrack);
+      }
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+      for (let file of e.target.files) {
+        const base64Data = await convertToBase64(file);
+        attachedFiles.push({ name: file.name, type: file.type, base64: base64Data.split(',')[1] });
+        renderFilePreviews();
+      }
+      fileInput.value = '';
+    });
+
+    function convertToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    function renderFilePreviews() {
+      filePreviewContainer.innerHTML = '';
+      attachedFiles.forEach((file, index) => {
+        const div = document.createElement('div');
+        div.className = 'theme-bg-third text-xs px-3 py-1.5 rounded-lg flex items-center gap-2 border theme-border';
+        div.innerHTML = `<span class="truncate max-w-xs">📎 ${file.name}</span>
+                         <button onclick="removeFile(${index})" class="text-red-400 hover:text-red-500 font-bold ml-1">×</button>`;
+        filePreviewContainer.appendChild(div);
+      });
+    }
+
+    window.removeFile = function(index) {
+      attachedFiles.splice(index, 1);
+      renderFilePreviews();
+    }
+
+    // --- Отправка сообщений ---
+    sendBtn.addEventListener('click', async () => {
+      const text = promptInput.value.trim();
+      if (!text && attachedFiles.length === 0) return;
+
+      promptInput.value = '';
+      promptInput.style.height = 'auto';
+
+      const parts = [];
+      if (text) parts.push({ text: text });
+      attachedFiles.forEach(f => parts.push({ inlineData: { mimeType: f.type, data: f.base64 } }));
+
+      const userMessage = { role: 'user', parts: parts, content: text };
+      chatHistory.push(userMessage);
+
+      renderUserMessage(text, [...attachedFiles]);
+      attachedFiles = [];
+      renderFilePreviews();
+
+      if (compareModeCheck.checked) {
+        sendToModel(modelSelect1.value, compareTrack1, 'blue');
+        sendToModel(modelSelect2.value, compareTrack2, 'green');
+      } else {
+        sendToModel(modelSelect1.value, singleTrack, 'blue');
+      }
+    });
+
+    function renderUserMessage(text, files) {
+      const fileNames = files.map(f => `<span class="text-blue-500 block text-xs mt-1">📎 Файл отправлен: ${f.name}</span>`).join('');
+      const htmlContent = `
+        <div class="flex justify-end mb-4">
+          <div class="bg-blue-100 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-2xl px-4 py-3 max-w-3xl shadow text-gray-900 dark:text-gray-100" style="background-color: rgba(59, 130, 246, 0.1);">
+            <div class="text-xs text-blue-500 font-bold mb-1">Вы:</div>
+            <div class="whitespace-pre-wrap">${text || '(Файл без текста)'}</div>
+            ${fileNames}
+          </div>
+        </div>`;
+      
+      if (compareModeCheck.checked) {
+        compareTrack1.insertAdjacentHTML('beforeend', htmlContent);
+        compareTrack2.insertAdjacentHTML('beforeend', htmlContent);
+      } else {
+        singleTrack.insertAdjacentHTML('beforeend', htmlContent);
+      }
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    async function sendToModel(modelId, targetTrack, colorClass) {
+      const blockId = 'ai-' + Math.random().toString(36).substr(2, 9);
+      const bColor = colorClass === 'blue' ? 'border-blue-500' : 'border-green-500';
+      const tColor = colorClass === 'blue' ? 'text-blue-500' : 'text-green-500';
+      
+      const aiBlockHtml = `
+        <div id="${blockId}" class="flex justify-start mb-4 w-full">
+          <div class="theme-bg-sec border-l-4 ${bColor} rounded-xl px-4 py-3 w-full shadow markdown-body theme-border">
+            <div class="text-xs ${tColor} font-bold mb-1">${modelId}:</div>
+            <div class="loading text-sm theme-text-sec animate-pulse">Думает...</div>
+          </div>
+        </div>`;
+      targetTrack.insertAdjacentHTML('beforeend', aiBlockHtml);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+
+      try {
+        const res = await fetch(`${WORKER_URL}/v1/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: modelId, messages: chatHistory })
+        });
+        const data = await res.json();
+        
+        const container = document.getElementById(blockId).querySelector('.markdown-body');
+        container.querySelector('.loading').remove();
+        
+        if (data.error) {
+          container.insertAdjacentHTML('beforeend', `<div class="text-red-500 font-medium">⚠️ Ошибка: ${data.error}</div>`);
+        } else {
+          container.insertAdjacentHTML('beforeend', `<div>${marked.parse(data.text)}</div>`);
+          if (!compareModeCheck.checked || targetTrack === compareTrack1) {
+            chatHistory.push({ role: 'assistant', content: data.text });
+          }
+        }
+      } catch (e) {
+        const container = document.getElementById(blockId).querySelector('.markdown-body');
+        container.querySelector('.loading').remove();
+        container.insertAdjacentHTML('beforeend', `<div class="text-red-500 font-medium">⚠️ Ошибка связи с воркером</div>`);
+      }
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    promptInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    loadModels();
+  </script>
 </body>
 </html>
