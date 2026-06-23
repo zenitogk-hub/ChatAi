@@ -16,10 +16,10 @@
       --border-color: #444746;
       --code-bg: #1e1f20;
       --user-msg-bg: #2b2a33;
+      --accent: #3b82f6;
     }
-    
     body.light-theme {
-      --bg-main: #f0f4f9; 
+      --bg-main: #f0f4f9;
       --bg-sidebar: #f8fafd;
       --bg-card: #ffffff;
       --text-main: #1f1f1f;
@@ -28,15 +28,7 @@
       --code-bg: #e9eef6;
       --user-msg-bg: #e3e3e3;
     }
-
-    body { 
-      height: 100vh;
-      height: 100dvh;
-      background-color: var(--bg-main); 
-      color: var(--text-main); 
-      transition: all 0.2s ease; 
-    }
-    
+    body { height: 100vh; height: 100dvh; background-color: var(--bg-main); color: var(--text-main); transition: all 0.2s ease; }
     .theme-sidebar { background-color: var(--bg-sidebar); border-color: var(--border-color); }
     .theme-card { background-color: var(--bg-card); border-color: var(--border-color); }
     .theme-text-sec { color: var(--text-sec); }
@@ -49,16 +41,58 @@
     .markdown-body code { font-family: monospace; background: rgba(148, 163, 184, 0.15); padding: 0.2rem 0.4rem; border-radius: 0.25rem; color: #ff6b6b; }
     body.light-theme .markdown-body code { color: #d946ef; }
     .markdown-body pre code { color: inherit; background: transparent; padding: 0; }
-    
+    .markdown-body p { margin: 0.4rem 0; }
+    .markdown-body ul, .markdown-body ol { margin: 0.4rem 0; padding-left: 1.4rem; }
+    .markdown-body table { border-collapse: collapse; margin: 0.5rem 0; }
+    .markdown-body th, .markdown-body td { border: 1px solid var(--border-color); padding: 0.4rem 0.6rem; }
+    .markdown-body blockquote { border-left: 3px solid var(--accent); padding-left: 0.8rem; color: var(--text-sec); margin: 0.5rem 0; }
+    .markdown-body .err { color: #f87171; }
+
     .badge { font-size: 0.65rem; font-weight: 600; padding: 0.1rem 0.4rem; border-radius: 0.25rem; }
-    
+    .icon-btn-mini { opacity: 0; transition: opacity 0.15s, background 0.15s; background: transparent; border: none; cursor: pointer; padding: 4px 6px; border-radius: 6px; color: var(--text-sec); font-size: 13px; }
+    .msg-row:hover .icon-btn-mini { opacity: 1; }
+    .icon-btn-mini:hover { background: var(--bg-card); color: var(--text-main); }
+
     @media (min-width: 768px) {
-      .sidebar-desktop-hidden {
-        margin-left: -16rem !important;
-        opacity: 0;
-        pointer-events: none;
-      }
+      .sidebar-desktop-hidden { margin-left: -16rem !important; opacity: 0; pointer-events: none; }
     }
+
+    /* Modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 22px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .modal h2 { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+    .modal label { display: block; font-size: 13px; color: var(--text-sec); margin-bottom: 6px; }
+    .modal input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-size: 14px; font-family: monospace; }
+    .modal input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+    .modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .modal button { padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; border: 1px solid var(--border-color); cursor: pointer; }
+    .modal button.primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .modal button.primary:hover { filter: brightness(1.1); }
+    .modal button.ghost { background: transparent; color: var(--text-main); }
+    .modal button.ghost:hover { background: var(--bg-main); }
+    .modal .hint { font-size: 12px; color: var(--text-sec); margin-top: 8px; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--text-main); color: var(--bg-main); padding: 8px 16px; border-radius: 8px; font-size: 13px; z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .toast.show { opacity: 1; }
+    .toast.err { background: #f87171; color: white; }
+
+    /* Composer — мой стиль */
+    .composer-wrap { padding: 12px 16px 16px; max-width: 768px; margin: 0 auto; }
+    .composer-inner { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 22px; padding: 6px 6px 6px 8px; display: flex; align-items: flex-end; gap: 6px; transition: border-color 0.15s, box-shadow 0.15s; }
+    .composer-inner:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18); }
+    .composer-attach { width: 38px; height: 38px; border-radius: 50%; background: transparent; border: none; color: var(--accent); cursor: pointer; display: grid; place-items: center; flex-shrink: 0; transition: background 0.15s; }
+    .composer-attach:hover { background: rgba(59, 130, 246, 0.1); }
+    .composer-textarea { flex: 1; background: transparent; border: none; outline: none; resize: none; color: var(--text-main); font: inherit; font-size: 15px; line-height: 1.5; padding: 9px 8px; min-height: 24px; max-height: 200px; }
+    .composer-textarea::placeholder { color: var(--text-sec); }
+    .composer-send { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: white; border: none; cursor: pointer; display: grid; place-items: center; flex-shrink: 0; transition: background 0.15s, transform 0.1s; }
+    .composer-send:hover:not(:disabled) { filter: brightness(1.1); }
+    .composer-send:disabled { opacity: 0.4; cursor: not-allowed; }
+    .composer-hint { font-size: 11px; color: var(--text-sec); text-align: center; margin-top: 8px; }
+    .composer-hint kbd { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 4px; padding: 1px 5px; font-size: 10px; font-family: monospace; }
+
+    .file-pill { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 999px; padding: 3px 10px; font-size: 12px; font-family: monospace; }
+    .file-pill button { background: transparent; border: none; color: #f87171; cursor: pointer; padding: 0 2px; font-size: 14px; line-height: 1; }
   </style>
 </head>
 <body class="font-sans antialiased flex overflow-hidden">
@@ -90,13 +124,16 @@
     <div class="flex-1 overflow-y-auto no-scrollbar px-2 space-y-1" id="chatSessionsContainer"></div>
 
     <div class="p-4 border-t theme-border space-y-2 text-xs font-medium flex-none">
+      <button id="settingsBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-500/20 transition">
+        ⚙️ Прокси: <span id="proxyStatus" class="theme-text-sec text-xs ml-auto truncate">…</span>
+      </button>
       <button id="themeToggleBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-500/20 transition">
         🌗 Сменить тему
       </button>
       <button id="exportChatBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-500/20 transition">
         💾 Экспорт диалога (.md)
       </button>
-      <button id="clearAllBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-red-400 hover:bg-red-900/20 transition">
+      <button id="clearAllBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-red-900/20 text-red-400 transition">
         🗑️ Очистить историю
       </button>
     </div>
@@ -105,13 +142,13 @@
   <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
 
   <main class="flex-1 flex flex-col h-full overflow-hidden relative">
-    
+
     <header class="theme-card border-b theme-border p-3 flex items-center justify-between gap-4 shadow-sm z-10 flex-none">
       <div class="flex items-center gap-3 shrink-0">
         <button id="burgerBtn" class="p-2 rounded-lg hover:bg-gray-500/20 transition focus:outline-none text-xl" title="Переключить боковое меню">
           ☰
         </button>
-        <h1 class="text-md font-bold tracking-tight hidden sm:block">Workspace <span class="text-blue-500 font-mono text-xs">v4.0</span></h1>
+        <h1 class="text-md font-bold tracking-tight hidden sm:block">Workspace <span class="text-blue-500 font-mono text-xs">v4.1</span></h1>
       </div>
 
       <div class="flex items-center gap-4 max-w-full overflow-x-auto no-scrollbar shrink-0">
@@ -136,115 +173,164 @@
       <div id="layoutWrapper" class="max-w-3xl mx-auto w-full space-y-6"></div>
     </div>
 
-    <div class="p-4 w-full max-w-3xl mx-auto flex-none pb-6">
+    <div class="composer-wrap">
       <div id="filePreviewContainer" class="flex flex-wrap gap-2 mb-2 px-2"></div>
-      
-      <div class="theme-card border theme-border rounded-3xl p-2 flex items-end gap-2 shadow-xl relative">
-        <label class="p-3 rounded-full hover:bg-gray-500/30 bg-gray-500/10 cursor-pointer transition flex items-center justify-center text-blue-400 shrink-0 mb-0.5" title="Прикрепить схемы/логи">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-          </svg>
-          <input type="file" id="fileInput" class="hidden" multiple>
+      <div class="composer-inner">
+        <label class="composer-attach" title="Прикрепить файл (картинку)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+          <input type="file" id="fileInput" class="hidden" accept="image/*" multiple>
         </label>
-
-        <textarea id="promptInput" rows="1" class="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-sm p-2.5 resize-none overflow-y-auto max-h-40" placeholder="Введите запрос к ИИ..."></textarea>
-        
-        <button id="sendBtn" class="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-full transition flex items-center justify-center shadow-md shrink-0 mb-0.5" title="Отправить запрос">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-          </svg>
+        <textarea id="promptInput" class="composer-textarea" rows="1" placeholder="Спроси что-нибудь…"></textarea>
+        <button id="sendBtn" class="composer-send" title="Отправить (Enter)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
+      <div class="composer-hint"><kbd>Enter</kbd> — отправить · <kbd>Shift+Enter</kbd> — перенос</div>
     </div>
 
   </main>
 
-  <script>
-    const WORKER_URL = 'https://chat-ai-proxy.zenitogk.workers.dev';
+  <!-- Modal: настройки прокси -->
+  <div id="settingsModal" class="modal-backdrop hidden">
+    <div class="modal">
+      <h2>⚙️ Настройки прокси</h2>
+      <label>URL Cloudflare Worker (например https://chat-ai-proxy.zenitogk.workers.dev)</label>
+      <input id="proxyInput" type="text" placeholder="https://chat-ai-proxy.zenitogk.workers.dev" />
+      <div class="hint">URL хранится локально в твоём браузере. Никуда не отправляется.</div>
+      <div class="actions">
+        <button class="ghost" id="settingsCancel">Отмена</button>
+        <button class="primary" id="settingsSave">Сохранить</button>
+      </div>
+    </div>
+  </div>
 
-    let chats = JSON.parse(localStorage.getItem('gemini_hub_chats')) || {};
-    let currentChatId = localStorage.getItem('gemini_hub_current_id') || '';
-    
+  <div class="toast" id="toast"></div>
+
+  <script>
+    'use strict';
+
+    // ===== Хранилище =====
+    const LS = {
+      chats: 'gemini_hub_chats',
+      current: 'gemini_hub_current_id',
+      theme: 'gemini_hub_theme',
+      hideOld: 'gemini_hub_hide_old',
+      model1: 'gemini_hub_model1',
+      model2: 'gemini_hub_model2',
+      proxy: 'chat_proxy_url',
+    };
+    const getLS = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } };
+    const setLS = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+
+    let chats = {};
+    try { chats = JSON.parse(getLS(LS.chats, '{}')) || {}; } catch { chats = {}; }
+    let currentChatId = getLS(LS.current, '');
+    let WORKER_URL = (getLS(LS.proxy, '') || '').trim().replace(/\/+$/, '');
+
     let attachedFiles = [];
     let allModelsData = [];
     let currentFilter = 'all';
-    let activeLoaders = {}; 
+    let activeLoaders = {};
 
-    const sidebar = document.getElementById('sidebar');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-    const burgerBtn = document.getElementById('burgerBtn');
-    const newChatBtn = document.getElementById('newChatBtn');
-    const chatSessionsContainer = document.getElementById('chatSessionsContainer');
-    
-    const compareModeCheck = document.getElementById('compareMode');
-    const hideOldModeCheck = document.getElementById('hideOldMode');
-    const model2Wrapper = document.getElementById('model2Wrapper');
-    const layoutWrapper = document.getElementById('layoutWrapper');
-    const modelSelect1 = document.getElementById('modelSelect1');
-    const modelSelect2 = document.getElementById('modelSelect2');
-    const capabilities1 = document.getElementById('capabilities1');
-    const capabilities2 = document.getElementById('capabilities2');
-    
-    const fileInput = document.getElementById('fileInput');
-    const filePreviewContainer = document.getElementById('filePreviewContainer');
-    const promptInput = document.getElementById('promptInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const chatWindow = document.getElementById('chatWindow');
+    // ===== DOM =====
+    const $ = (id) => document.getElementById(id);
+    const sidebar = $('sidebar');
+    const sidebarOverlay = $('sidebarOverlay');
+    const burgerBtn = $('burgerBtn');
+    const newChatBtn = $('newChatBtn');
+    const chatSessionsContainer = $('chatSessionsContainer');
+    const compareModeCheck = $('compareMode');
+    const hideOldModeCheck = $('hideOldMode');
+    const model2Wrapper = $('model2Wrapper');
+    const layoutWrapper = $('layoutWrapper');
+    const modelSelect1 = $('modelSelect1');
+    const modelSelect2 = $('modelSelect2');
+    const capabilities1 = $('capabilities1');
+    const capabilities2 = $('capabilities2');
+    const fileInput = $('fileInput');
+    const filePreviewContainer = $('filePreviewContainer');
+    const promptInput = $('promptInput');
+    const sendBtn = $('sendBtn');
+    const chatWindow = $('chatWindow');
+    const themeToggleBtn = $('themeToggleBtn');
+    const exportChatBtn = $('exportChatBtn');
+    const clearAllBtn = $('clearAllBtn');
+    const settingsBtn = $('settingsBtn');
+    const settingsModal = $('settingsModal');
+    const proxyInput = $('proxyInput');
+    const settingsCancel = $('settingsCancel');
+    const settingsSave = $('settingsSave');
+    const proxyStatus = $('proxyStatus');
+    const toastEl = $('toast');
 
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
-    const exportChatBtn = document.getElementById('exportChatBtn');
-    const clearAllBtn = document.getElementById('clearAllBtn');
+    // ===== Утилиты =====
+    function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+    function toast(text, kind) {
+      toastEl.textContent = text;
+      toastEl.className = 'toast show' + (kind === 'err' ? ' err' : '');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => { toastEl.className = 'toast'; }, 2400);
+    }
+    function updateProxyStatus() {
+      proxyStatus.textContent = WORKER_URL ? WORKER_URL.replace(/^https?:\/\//, '') : 'не настроен';
+    }
 
-    burgerBtn.onclick = () => { 
-      if (window.innerWidth < 768) {
-        sidebar.classList.toggle('-translate-x-full');
-        sidebarOverlay.classList.toggle('hidden');
-      } else {
-        sidebar.classList.toggle('sidebar-desktop-hidden');
-      }
+    // ===== Settings modal =====
+    function openSettings() {
+      proxyInput.value = WORKER_URL || '';
+      settingsModal.classList.remove('hidden');
+      setTimeout(() => proxyInput.focus(), 50);
+    }
+    function closeSettings() { settingsModal.classList.add('hidden'); }
+    settingsBtn.onclick = openSettings;
+    settingsCancel.onclick = closeSettings;
+    settingsSave.onclick = () => {
+      const url = proxyInput.value.trim().replace(/\/+$/, '');
+      if (!url) { toast('URL не может быть пустым', 'err'); return; }
+      WORKER_URL = url;
+      setLS(LS.proxy, WORKER_URL);
+      updateProxyStatus();
+      closeSettings();
+      toast('Прокси сохранён');
+      loadModels();
     };
-    
-    sidebarOverlay.onclick = () => { 
-      sidebar.classList.add('-translate-x-full'); 
-      sidebarOverlay.classList.add('hidden'); 
+    settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettings(); });
+
+    // ===== Sidebar =====
+    burgerBtn.onclick = () => {
+      if (window.innerWidth < 768) { sidebar.classList.toggle('-translate-x-full'); sidebarOverlay.classList.toggle('hidden'); }
+      else sidebar.classList.toggle('sidebar-desktop-hidden');
     };
+    sidebarOverlay.onclick = () => { sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('hidden'); };
 
     themeToggleBtn.onclick = () => {
       document.body.classList.toggle('light-theme');
-      localStorage.setItem('gemini_hub_theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+      setLS(LS.theme, document.body.classList.contains('light-theme') ? 'light' : 'dark');
     };
-    if(localStorage.getItem('gemini_hub_theme') === 'light') document.body.classList.add('light-theme');
+    if (getLS(LS.theme, 'dark') === 'light') document.body.classList.add('light-theme');
 
-    hideOldModeCheck.checked = localStorage.getItem('gemini_hub_hide_old') !== 'false';
+    hideOldModeCheck.checked = getLS(LS.hideOld, 'true') !== 'false';
+    hideOldModeCheck.onchange = () => { setLS(LS.hideOld, hideOldModeCheck.checked); applyFiltering(); };
 
-    hideOldModeCheck.onchange = () => {
-      localStorage.setItem('gemini_hub_hide_old', hideOldModeCheck.checked);
-      applyFiltering();
-    };
-
-    newChatBtn.onclick = () => { createNewSession(); };
-
+    newChatBtn.onclick = () => createNewSession();
     clearAllBtn.onclick = () => {
-      if(confirm('Удалить все чаты безвозвратно?')) {
-        chats = {}; currentChatId = '';
-        saveState(); createNewSession();
-      }
+      if (confirm('Удалить все чаты безвозвратно?')) { chats = {}; currentChatId = ''; saveState(); createNewSession(); }
     };
-
     exportChatBtn.onclick = () => {
       const activeHistory = chats[currentChatId]?.history || [];
-      if (!activeHistory.length) return alert('История текущего чата пуста.');
+      if (!activeHistory.length) return toast('История пуста', 'err');
       let md = `# Экспорт сессии чата\n\n`;
       activeHistory.forEach(msg => {
-        md += `### ${msg.role === 'user' ? 'Вы' : `ИИ (${msg.modelId})`}:\n${msg.content}\n\n`;
+        md += `### ${msg.role === 'user' ? 'Вы' : 'ИИ (' + (msg.modelId || 'AI') + ')'}\n${msg.content || ''}\n\n`;
       });
       const blob = new Blob([md], { type: 'text/markdown' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `chat_export_${currentChatId.slice(0,6)}.md`;
+      a.download = `chat_export_${(currentChatId || 'export').slice(0,6)}.md`;
       a.click();
     };
 
+    // ===== Sessions =====
     function createNewSession() {
       const id = 'chat_' + Date.now();
       chats[id] = { title: 'Новый диалог', history: [] };
@@ -252,162 +338,134 @@
       saveState();
       renderSidebarSessions();
       renderActiveChat();
-      if(window.innerWidth < 768) { sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('hidden'); }
+      if (window.innerWidth < 768) { sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('hidden'); }
     }
-
     function saveState() {
-      localStorage.setItem('gemini_hub_chats', JSON.stringify(chats));
-      localStorage.setItem('gemini_hub_current_id', currentChatId);
+      setLS(LS.chats, JSON.stringify(chats));
+      setLS(LS.current, currentChatId);
     }
-
     function renderSidebarSessions() {
       chatSessionsContainer.innerHTML = '';
-      Object.keys(chats).sort((a,b) => b.split('_')[1] - a.split('_')[1]).forEach(id => {
+      Object.keys(chats).sort((a, b) => b.split('_')[1] - a.split('_')[1]).forEach(id => {
         const isSelected = id === currentChatId;
         const activeClass = isSelected ? 'bg-blue-600/20 text-blue-400 font-medium' : 'hover:bg-gray-500/10';
-        
         const div = document.createElement('div');
         div.className = `flex items-center justify-between px-3 py-2.5 mx-2 rounded-xl text-sm cursor-pointer transition ${activeClass}`;
-        div.innerHTML = `
-          <div class="truncate flex-1 pr-2" onclick="switchSession('${id}')">💬 ${chats[id].title}</div>
-          <button onclick="deleteSession('${id}', event)" class="opacity-40 hover:opacity-100 text-red-400 text-xs px-1">✕</button>
-        `;
+        div.innerHTML = `<div class="truncate flex-1 pr-2" onclick="window.__switchSession('${id}')">💬 ${escapeHtml(chats[id].title)}</div><button onclick="window.__deleteSession('${id}', event)" class="opacity-40 hover:opacity-100 text-red-400 text-xs px-1">✕</button>`;
         chatSessionsContainer.appendChild(div);
       });
     }
-
-    window.switchSession = function(id) {
-      currentChatId = id;
-      saveState();
-      renderSidebarSessions();
-      renderActiveChat();
-      if(window.innerWidth < 768) { sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('hidden'); }
-    }
-
-    window.deleteSession = function(id, event) {
+    window.__switchSession = function(id) {
+      currentChatId = id; saveState(); renderSidebarSessions(); renderActiveChat();
+      if (window.innerWidth < 768) { sidebar.classList.add('-translate-x-full'); sidebarOverlay.classList.add('hidden'); }
+    };
+    window.__deleteSession = function(id, event) {
       event.stopPropagation();
       delete chats[id];
-      if(currentChatId === id) {
+      if (currentChatId === id) {
         const keys = Object.keys(chats);
         currentChatId = keys.length ? keys[0] : '';
       }
       saveState();
-      if(!currentChatId) createNewSession();
+      if (!currentChatId) createNewSession();
       else { renderSidebarSessions(); renderActiveChat(); }
-    }
+    };
 
+    // ===== Model classification =====
     function getModelFamilyAndVersion(id) {
       let clean = id.toLowerCase();
-      
-      // Разделяем слипшиеся буквы и цифры (например, llama3 -> llama-3)
       clean = clean.replace(/([a-z])(\d)/g, '$1-$2').replace(/(\d)([a-z])/g, '$1-$2');
-      
-      // Находим первую версию в строке (десятичное число или целое)
       const versionMatch = clean.match(/(\d+\.\d+|\d+)/);
       let version = 0;
       if (versionMatch) {
         version = parseFloat(versionMatch[1]);
-        // Исключаем саму цифру версии из строки для формирования базы семейства
         clean = clean.replace(versionMatch[1], '');
       }
-      
-      // Вырезаем технические маркеры, суффиксы дат, портов и контекста
       clean = clean.replace(/-(preview|exp|experimental|instant|versatile|text|latest|legacy|older|vision|distill)/g, '');
-      clean = clean.replace(/-\d{2}-\d{2}/g, ''); 
-      clean = clean.replace(/-\d{4,5}/g, '');     
-      
-      // Избавляемся от паразитных дефисов после вырезки
+      clean = clean.replace(/-\d{2}-\d{2}/g, '');
+      clean = clean.replace(/-\d{4,5}/g, '');
       clean = clean.replace(/-+/g, '-').replace(/^-|-$/g, '');
-      
       return { family: clean, version: version };
     }
-
     function evaluateCapabilities(modelId) {
       const id = modelId.toLowerCase();
       const isGemini = id.includes('gemini');
       return {
         files: isGemini,
-        speed: id.includes('flash') || id.includes('8b') || id.includes('3b') || id.includes('mini'),
-        power: id.includes('pro') || id.includes('70b') || id.includes('72b') || id.includes('r1') || id.includes('large')
+        speed: id.includes('flash') || id.includes('8b') || id.includes('3b') || id.includes('mini') || id.includes('instant') || id.includes('lite'),
+        power: id.includes('pro') || id.includes('70b') || id.includes('72b') || id.includes('r1') || id.includes('large') || id.includes('maverick'),
       };
     }
-
     function drawCapabilitiesBadges(modelId, targetContainer) {
-      targetContainer.innerHTML = ''; if(!modelId) return;
+      targetContainer.innerHTML = '';
+      if (!modelId) return;
       const caps = evaluateCapabilities(modelId);
-      if(caps.files) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-purple-600 text-white">📁 Мультимодальный</span>');
+      if (caps.files) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-purple-600 text-white">📁 Мультимодальный</span>');
       else targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-gray-600 text-gray-300">✍️ Только Текст</span>');
-      if(caps.speed) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-amber-500 text-gray-900">⚡ Fast</span>');
-      if(caps.power) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-red-600 text-white">🧠 High Logics</span>');
+      if (caps.speed) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-amber-500 text-gray-900">⚡ Fast</span>');
+      if (caps.power) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-red-600 text-white">🧠 High Logics</span>');
     }
 
+    // ===== Models loading =====
     async function loadModels() {
+      if (!WORKER_URL) {
+        updateProxyStatus();
+        openSettings();
+        return;
+      }
       try {
-        const res = await fetch(`${WORKER_URL}/v1/models`);
+        const res = await fetch(WORKER_URL + '/v1/models');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         allModelsData = data.models || [];
         applyFiltering();
-      } catch (e) { console.error('Ошибка считывания моделей с прокси.'); }
+        updateProxyStatus();
+      } catch (e) {
+        toast('Не удалось загрузить модели: ' + e.message, 'err');
+      }
     }
 
     function applyFiltering() {
       const isHideOld = hideOldModeCheck.checked;
       let maxVersions = {};
-
       if (isHideOld) {
         allModelsData.forEach(m => {
           const parsed = getModelFamilyAndVersion(m.id);
           if (parsed) {
-            if (!maxVersions[parsed.family] || parsed.version > maxVersions[parsed.family]) {
-              maxVersions[parsed.family] = parsed.version;
-            }
+            if (!maxVersions[parsed.family] || parsed.version > maxVersions[parsed.family]) maxVersions[parsed.family] = parsed.version;
           }
         });
       }
-
       const filtered = allModelsData.filter(m => {
         const caps = evaluateCapabilities(m.id);
-        if(currentFilter === 'files' && !caps.files) return false;
-        if(currentFilter === 'speed' && !caps.speed) return false;
-        if(currentFilter === 'power' && !caps.power) return false;
-
+        if (currentFilter === 'files' && !caps.files) return false;
+        if (currentFilter === 'speed' && !caps.speed) return false;
+        if (currentFilter === 'power' && !caps.power) return false;
         if (isHideOld) {
           const parsed = getModelFamilyAndVersion(m.id);
-          if (parsed && parsed.version < maxVersions[parsed.family]) {
-            return false; 
-          }
-          if (/(-legacy|-older|base$)/i.test(m.id)) {
-            return false;
-          }
+          if (parsed && parsed.version < maxVersions[parsed.family]) return false;
+          if (/(-legacy|-older|base$)/i.test(m.id)) return false;
         }
         return true;
       });
-
-      const savedM1 = localStorage.getItem('gemini_hub_model1');
-      const savedM2 = localStorage.getItem('gemini_hub_model2');
 
       [modelSelect1, modelSelect2].forEach((select) => {
         select.innerHTML = '';
         filtered.forEach(m => {
           const opt = document.createElement('option');
-          opt.value = m.id; opt.textContent = m.label || m.id;
+          opt.value = m.id;
+          opt.textContent = m.label || m.id;
           select.appendChild(opt);
         });
       });
 
-      if (savedM1 && filtered.find(m => m.id === savedM1)) {
-        modelSelect1.value = savedM1;
-      } else if (modelSelect1.options.length > 0) {
-        modelSelect1.selectedIndex = 0;
-      }
-
-      if (savedM2 && filtered.find(m => m.id === savedM2)) {
-        modelSelect2.value = savedM2;
-      } else if (modelSelect2.options.length > 1) {
-        modelSelect2.selectedIndex = 1;
-      } else if (modelSelect2.options.length > 0) {
-        modelSelect2.selectedIndex = 0;
-      }
+      const savedM1 = getLS(LS.model1, '');
+      const savedM2 = getLS(LS.model2, '');
+      if (savedM1 && filtered.find(m => m.id === savedM1)) modelSelect1.value = savedM1;
+      else if (modelSelect1.options.length > 0) modelSelect1.selectedIndex = 0;
+      if (savedM2 && filtered.find(m => m.id === savedM2)) modelSelect2.value = savedM2;
+      else if (modelSelect2.options.length > 1) modelSelect2.selectedIndex = 1;
+      else if (modelSelect2.options.length > 0) modelSelect2.selectedIndex = 0;
 
       drawCapabilitiesBadges(modelSelect1.value, capabilities1);
       drawCapabilitiesBadges(modelSelect2.value, capabilities2);
@@ -421,151 +479,230 @@
         applyFiltering();
       });
     });
-
-    modelSelect1.onchange = (e) => {
-      localStorage.setItem('gemini_hub_model1', e.target.value);
-      drawCapabilitiesBadges(e.target.value, capabilities1);
-    };
-    
-    modelSelect2.onchange = (e) => {
-      localStorage.setItem('gemini_hub_model2', e.target.value);
-      drawCapabilitiesBadges(e.target.value, capabilities2);
-    };
-
+    modelSelect1.onchange = (e) => { setLS(LS.model1, e.target.value); drawCapabilitiesBadges(e.target.value, capabilities1); };
+    modelSelect2.onchange = (e) => { setLS(LS.model2, e.target.value); drawCapabilitiesBadges(e.target.value, capabilities2); };
     compareModeCheck.onchange = () => { model2Wrapper.classList.toggle('hidden', !compareModeCheck.checked); renderActiveChat(); };
 
+    // ===== Render messages =====
     function renderActiveChat() {
       layoutWrapper.innerHTML = '';
       const isCompare = compareModeCheck.checked;
-      const history = chats[currentChatId]?.history || [];
+      const history = (chats[currentChatId] && chats[currentChatId].history) || [];
 
       if (!isCompare) {
-        layoutWrapper.className = "max-w-3xl mx-auto w-full space-y-6";
-        history.forEach(msg => {
-          layoutWrapper.insertAdjacentHTML('beforeend', createMessageHtml(msg));
-        });
-        if(activeLoaders['track1']) layoutWrapper.insertAdjacentHTML('beforeend', createLoaderHtml(activeLoaders['track1']));
+        layoutWrapper.className = "max-w-3xl mx-auto w-full space-y-4";
+        history.forEach((msg, idx) => layoutWrapper.insertAdjacentHTML('beforeend', createMessageHtml(msg, idx)));
+        if (activeLoaders['track1']) layoutWrapper.insertAdjacentHTML('beforeend', createLoaderHtml(activeLoaders['track1']));
       } else {
         layoutWrapper.className = "max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 items-start";
-        
         const track1Col = document.createElement('div'); track1Col.className = "space-y-4 border-b md:border-b-0 md:border-r theme-border pb-6 md:pb-0 md:pr-4";
         track1Col.innerHTML = `<div class="text-center text-xs font-bold text-blue-500 uppercase tracking-widest border-b theme-border pb-2 mb-2">Основная модель</div>`;
-        
         const track2Col = document.createElement('div'); track2Col.className = "space-y-4 pt-4 md:pt-0 md:pl-2";
         track2Col.innerHTML = `<div class="text-center text-xs font-bold text-green-500 uppercase tracking-widest border-b theme-border pb-2 mb-2">Параллельная модель</div>`;
 
-        history.forEach(msg => {
+        history.forEach((msg, idx) => {
           if (msg.role === 'user') {
-            const userHtml = createMessageHtml(msg);
+            const userHtml = createMessageHtml(msg, idx);
             track1Col.insertAdjacentHTML('beforeend', userHtml);
             track2Col.insertAdjacentHTML('beforeend', userHtml);
           } else {
-            if(msg.track === 'track2') track2Col.insertAdjacentHTML('beforeend', createMessageHtml(msg));
-            else track1Col.insertAdjacentHTML('beforeend', createMessageHtml(msg));
+            if (msg.track === 'track2') track2Col.insertAdjacentHTML('beforeend', createMessageHtml(msg, idx));
+            else track1Col.insertAdjacentHTML('beforeend', createMessageHtml(msg, idx));
           }
         });
-
-        if(activeLoaders['track1']) track1Col.insertAdjacentHTML('beforeend', createLoaderHtml(activeLoaders['track1']));
-        if(activeLoaders['track2']) track2Col.insertAdjacentHTML('beforeend', createLoaderHtml(activeLoaders['track2']));
-
+        if (activeLoaders['track1']) track1Col.insertAdjacentHTML('beforeend', createLoaderHtml(activeLoaders['track1']));
+        if (activeLoaders['track2']) track2Col.insertAdjacentHTML('beforeend', createLoaderHtml(activeLoaders['track2']));
         layoutWrapper.appendChild(track1Col);
         layoutWrapper.appendChild(track2Col);
       }
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    function createMessageHtml(msg) {
-      if(msg.role === 'user') {
-        const fileBadges = (msg.files || []).map(f => `<span class="text-xs text-blue-400 block font-mono mt-1">📎 Данные файла: ${f.name}</span>`).join('');
-        return `
-          <div class="flex justify-end w-full">
-            <div class="rounded-2xl px-4 py-3 max-w-xl shadow-sm text-sm" style="background-color: var(--user-msg-bg);">
+    function createMessageHtml(msg, idx) {
+      const isUser = msg.role === 'user';
+      const fileBadges = (msg.files || []).map(f => `<div class="text-xs text-blue-400 block font-mono mt-1">📎 ${escapeHtml(f.name)}</div>`).join('');
+
+      // Action buttons
+      let actions = '';
+      if (isUser) {
+        actions = `<div class="flex gap-1 mt-2 -mb-1">
+          <button class="icon-btn-mini" data-action="edit" data-idx="${idx}" title="Редактировать и переотправить">✏️</button>
+        </div>`;
+      } else {
+        const cleanText = (msg.content || '').replace(/<[^>]+>/g, '');
+        actions = `<div class="flex gap-1 mt-2 -mb-1">
+          <button class="icon-btn-mini" data-action="copy" data-idx="${idx}" title="Копировать">📋</button>
+          ${msg.track ? '' : `<button class="icon-btn-mini" data-action="regen" data-idx="${idx}" title="Перегенерировать">🔄</button>`}
+        </div>`;
+      }
+
+      if (isUser) {
+        return `<div class="msg-row flex justify-end w-full">
+          <div class="max-w-xl">
+            <div class="rounded-2xl px-4 py-3 shadow-sm text-sm" style="background-color: var(--user-msg-bg);">
               <div class="text-xs text-blue-400 font-bold mb-1">Вы:</div>
-              <div class="whitespace-pre-wrap">${msg.content || '(Вложение)'}</div>
+              <div class="whitespace-pre-wrap">${escapeHtml(msg.content) || '<span class="theme-text-sec italic">(Вложение без текста)</span>'}</div>
               ${fileBadges}
             </div>
-          </div>`;
+            ${actions}
+          </div>
+        </div>`;
       } else {
         const isTrack2 = msg.track === 'track2';
         const accentColor = isTrack2 ? 'text-green-400' : 'text-blue-400';
-        return `
-          <div class="flex justify-start w-full">
-            <div class="w-full max-w-full markdown-body">
-              <div class="text-xs ${accentColor} font-bold font-mono mb-1">${msg.modelId}:</div>
-              <div class="text-sm">${marked.parse(msg.content)}</div>
-            </div>
-          </div>`;
+        let body;
+        if (msg.error) {
+          body = `<div class="markdown-body"><div class="err">⚠️ ${escapeHtml(msg.content)}</div></div>`;
+        } else {
+          try { body = marked.parse(msg.content || ''); } catch { body = escapeHtml(msg.content || ''); }
+        }
+        return `<div class="msg-row flex justify-start w-full">
+          <div class="w-full max-w-full">
+            <div class="text-xs ${accentColor} font-bold font-mono mb-1">${escapeHtml(msg.modelId || 'AI')}:</div>
+            <div class="markdown-body text-sm">${body}</div>
+            ${actions}
+          </div>
+        </div>`;
       }
     }
 
     function createLoaderHtml(modelId) {
-      return `
-        <div class="flex justify-start w-full animate-pulse">
-          <div class="w-full theme-card rounded-2xl p-4 border theme-border">
-            <div class="text-xs theme-text-sec font-mono font-bold mb-1">${modelId}</div>
-            <div class="text-xs text-blue-400 flex items-center gap-2">🔄 Вычисление матрицы ответа...</div>
-          </div>
-        </div>`;
+      return `<div class="flex justify-start w-full animate-pulse">
+        <div class="w-full theme-card rounded-2xl p-4 border theme-border">
+          <div class="text-xs theme-text-sec font-mono font-bold mb-1">${escapeHtml(modelId)}</div>
+          <div class="text-xs text-blue-400 flex items-center gap-2">🔄 Вычисление матрицы ответа…</div>
+        </div>
+      </div>`;
     }
 
+    // ===== Action buttons (event delegation) =====
+    layoutWrapper.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const idx = parseInt(btn.dataset.idx, 10);
+      const msg = chats[currentChatId]?.history?.[idx];
+      if (!msg) return;
+
+      if (action === 'copy') {
+        const text = msg.content || '';
+        navigator.clipboard.writeText(text).then(() => toast('Скопировано')).catch(() => toast('Не удалось скопировать', 'err'));
+      } else if (action === 'edit') {
+        startEditMessage(idx);
+      } else if (action === 'regen') {
+        regenerateFrom(idx);
+      }
+    });
+
+    function startEditMessage(idx) {
+      const msg = chats[currentChatId]?.history?.[idx];
+      if (!msg || msg.role !== 'user') return;
+      promptInput.value = msg.content || '';
+      promptInput.style.height = 'auto';
+      promptInput.style.height = (promptInput.scrollHeight) + 'px';
+      promptInput.focus();
+      // Сохраним индекс — при следующем Enter переотправим от этого сообщения
+      promptInput.dataset.editIdx = String(idx);
+      toast('Измени текст и нажми Enter');
+    }
+
+    async function regenerateFrom(idx) {
+      const chat = chats[currentChatId];
+      if (!chat) return;
+      // Удаляем все сообщения после idx (включая сам ответ)
+      chat.history = chat.history.slice(0, idx);
+      // Удалим последующие ответы этой же модели
+      saveState();
+      renderActiveChat();
+      // Запустим запрос заново
+      const m1 = modelSelect1.value;
+      const m2 = modelSelect2.value;
+      const isCompare = compareModeCheck.checked;
+      activeLoaders['track1'] = m1;
+      if (isCompare) activeLoaders['track2'] = m2;
+      renderActiveChat();
+      const tasks = [executeRequest(m1, 'track1')];
+      if (isCompare) tasks.push(executeRequest(m2, 'track2'));
+      await Promise.all(tasks);
+    }
+
+    // ===== Files =====
     fileInput.addEventListener('change', async (e) => {
-      for (let file of e.target.files) {
-        const base64Data = await convertToBase64(file);
-        attachedFiles.push({ name: file.name, type: file.type, base64: base64Data.split(',')[1] });
+      for (const file of e.target.files) {
+        if (file.size > 10 * 1024 * 1024) { toast('Файл слишком большой (>10MB)', 'err'); continue; }
+        const dataUrl = await convertToBase64(file);
+        attachedFiles.push({ name: file.name, type: file.type, base64: dataUrl.split(',')[1] });
         renderFilePreviews();
       }
       fileInput.value = '';
     });
-
     function convertToBase64(file) {
-      return new Promise((resolve) => {
-        const r = new FileReader(); r.readAsDataURL(file);
+      return new Promise(resolve => {
+        const r = new FileReader();
+        r.readAsDataURL(file);
         r.onload = () => resolve(r.result);
       });
     }
-
     function renderFilePreviews() {
       filePreviewContainer.innerHTML = '';
       attachedFiles.forEach((f, idx) => {
-        const div = document.createElement('div');
-        div.className = 'theme-card text-xs px-3 py-1.5 rounded-full flex items-center gap-2 border theme-border font-mono';
-        div.innerHTML = `<span>📎 ${f.name}</span><button onclick="removeFile(${idx})" class="text-red-400 font-bold ml-1">×</button>`;
-        filePreviewContainer.appendChild(div);
+        const pill = document.createElement('div');
+        pill.className = 'file-pill';
+        pill.innerHTML = `<span>📎 ${escapeHtml(f.name)}</span><button onclick="window.__removeFile(${idx})" title="Убрать">×</button>`;
+        filePreviewContainer.appendChild(pill);
       });
     }
+    window.__removeFile = function(idx) { attachedFiles.splice(idx, 1); renderFilePreviews(); };
 
-    window.removeFile = function(idx) { attachedFiles.splice(idx, 1); renderFilePreviews(); };
-
-    sendBtn.onclick = async () => {
+    // ===== Send =====
+    async function send() {
       const text = promptInput.value.trim();
       if (!text && attachedFiles.length === 0) return;
+      if (!WORKER_URL) { openSettings(); return; }
 
-      promptInput.value = ''; promptInput.style.height = 'auto';
+      // Если редактирование — обрезаем историю до этого user-сообщения
+      const editIdx = promptInput.dataset.editIdx;
+      let history = (chats[currentChatId] && chats[currentChatId].history) || [];
 
-      const currentChat = chats[currentChatId];
-      if(currentChat.history.length === 0 && text) {
-        currentChat.title = text.slice(0, 24) + (text.length > 24 ? '...' : '');
+      if (editIdx !== undefined) {
+        const idx = parseInt(editIdx, 10);
+        const chat = chats[currentChatId];
+        if (chat && chat.history[idx] && chat.history[idx].role === 'user') {
+          // Обновим текст/файлы
+          chat.history[idx] = { ...chat.history[idx], content: text, files: [...attachedFiles] };
+          // Удалим всё после этого user-сообщения
+          chat.history = chat.history.slice(0, idx + 1);
+          history = chat.history;
+          saveState();
+        }
+        delete promptInput.dataset.editIdx;
+      } else {
+        const currentChat = chats[currentChatId] || createNewSession() || chats[currentChatId];
+        if (currentChat.history.length === 0 && text) currentChat.title = text.slice(0, 24) + (text.length > 24 ? '…' : '');
+        currentChat.history.push({ role: 'user', content: text, files: [...attachedFiles] });
+        history = currentChat.history;
+        saveState();
       }
 
-      currentChat.history.push({ role: 'user', content: text, files: [...attachedFiles] });
-      saveState(); renderSidebarSessions();
+      promptInput.value = ''; promptInput.style.height = 'auto';
+      attachedFiles = []; renderFilePreviews();
+      renderSidebarSessions();
+      renderActiveChat();
 
       const m1 = modelSelect1.value;
       const m2 = modelSelect2.value;
       const isCompare = compareModeCheck.checked;
-
       activeLoaders['track1'] = m1;
-      if(isCompare) activeLoaders['track2'] = m2;
-
+      if (isCompare) activeLoaders['track2'] = m2;
       renderActiveChat();
-      attachedFiles = []; renderFilePreviews();
 
       const tasks = [executeRequest(m1, 'track1')];
-      if(isCompare) tasks.push(executeRequest(m2, 'track2'));
+      if (isCompare) tasks.push(executeRequest(m2, 'track2'));
       await Promise.all(tasks);
-    };
+    }
 
     async function executeRequest(modelId, trackName) {
+      if (!modelId) { delete activeLoaders[trackName]; renderActiveChat(); return; }
       try {
         const history = chats[currentChatId].history;
         const formattedMessages = history.map(msg => {
@@ -578,36 +715,49 @@
           return { role: 'assistant', content: msg.content };
         });
 
-        const res = await fetch(`${WORKER_URL}/v1/chat`, {
+        const res = await fetch(WORKER_URL + '/v1/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: modelId, messages: formattedMessages })
+          body: JSON.stringify({ model: modelId, messages: formattedMessages }),
         });
         const data = await res.json();
-        
         delete activeLoaders[trackName];
 
-        if (!data.error) {
-          chats[currentChatId].history.push({ role: 'assistant', modelId, content: data.text, track: trackName });
+        if (!res.ok || data.error) {
+          // Встраиваем ошибку в чат, а не alert
+          chats[currentChatId].history.push({ role: 'assistant', modelId, content: data.message || data.error || ('HTTP ' + res.status), error: true, track: trackName });
           saveState();
         } else {
-          alert(`Ошибка ${modelId}: ${data.error}`);
+          chats[currentChatId].history.push({ role: 'assistant', modelId, content: data.text || '(пустой ответ)', track: trackName });
+          saveState();
         }
       } catch (e) {
         delete activeLoaders[trackName];
-        alert(`Ошибка сети при работе с ${modelId}`);
+        chats[currentChatId].history.push({ role: 'assistant', modelId, content: 'Ошибка сети: ' + e.message, error: true, track: trackName });
+        saveState();
       }
       renderActiveChat();
     }
 
+    // ===== Composer wiring =====
+    sendBtn.onclick = send;
     promptInput.addEventListener('input', function() {
-      this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+    });
+    promptInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        send();
+      }
     });
 
-    if(!currentChatId || !chats[currentChatId]) createNewSession();
-    loadModels();
+    // ===== Init =====
+    updateProxyStatus();
+    if (!currentChatId || !chats[currentChatId]) createNewSession();
     renderSidebarSessions();
     renderActiveChat();
+    loadModels();
   </script>
 </body>
 </html>
