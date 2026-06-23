@@ -59,6 +59,7 @@
 
     /* Modal */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .modal-backdrop.hidden { display: none !important; }
     .modal { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 22px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
     .modal h2 { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
     .modal label { display: block; font-size: 13px; color: var(--text-sec); margin-bottom: 6px; }
@@ -73,7 +74,8 @@
     .modal .hint { font-size: 12px; color: var(--text-sec); margin-top: 8px; }
 
     /* Toast */
-    .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--text-main); color: var(--bg-main); padding: 8px 16px; border-radius: 8px; font-size: 13px; z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--text-main); color: var(--bg-main); padding: 8px 16px; border-radius: 8px; font-size: 13px; z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.2s; display: none; }
+    .toast.show { opacity: 1; display: block; }
     .toast.show { opacity: 1; }
     .toast.err { background: #f87171; color: white; }
 
@@ -290,7 +292,7 @@
       WORKER_URL = url;
       setLS(LS.proxy, WORKER_URL);
       updateProxyStatus();
-      closeSettings();
+      closeSettings(); // закрываем модалку
       toast('Прокси сохранён');
       loadModels();
     };
