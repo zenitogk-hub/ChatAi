@@ -408,6 +408,38 @@
       if (caps.power) targetContainer.insertAdjacentHTML('beforeend', '<span class="badge bg-red-600 text-white">🧠 High Logics</span>');
     }
 
+    // === Провайдер: цветной бейдж по типу ===
+    const PROVIDER_STYLES = {
+      gemini:    { label: 'Gemini',    bg: 'bg-blue-600',     text: 'text-white' },
+      openai:    { label: 'OpenAI',    bg: 'bg-emerald-600',  text: 'text-white' },
+      groq:      { label: 'Groq',      bg: 'bg-orange-600',   text: 'text-white' },
+      openrouter:{ label: 'OpenRouter',bg: 'bg-violet-600',   text: 'text-white' },
+    };
+    function getProviderOf(modelId) {
+      if (!modelId) return null;
+      if (modelId.includes('gpt-oss') || /^gpt-/i.test(modelId) || modelId.startsWith('openai/')) return 'openai';
+      if (modelId.startsWith('llama') || modelId.startsWith('meta-llama/')) return 'groq'; // по умолчанию Groq для Llama
+      if (modelId.startsWith('qwen') || modelId.startsWith('mixtral')) return 'groq';
+      if (modelId.startsWith('gemini')) return 'gemini';
+      return null;
+    }
+    function drawProviderBadge(modelId, targetContainer) {
+      // Удаляем предыдущий бейдж провайдера (если был)
+      const old = targetContainer.querySelector('.provider-badge');
+      if (old) old.remove();
+      if (!modelId) return;
+      let provider = null;
+      const m = allModelsData.find(x => x.id === modelId);
+      if (m && m.provider) provider = m.provider;
+      if (!provider) provider = getProviderOf(modelId);
+      if (!provider || !PROVIDER_STYLES[provider]) return;
+      const style = PROVIDER_STYLES[provider];
+      const badge = document.createElement('span');
+      badge.className = `provider-badge badge ${style.bg} ${style.text} font-bold`;
+      badge.textContent = style.label;
+      targetContainer.insertAdjacentElement('afterbegin', badge);
+    }
+
     // ===== Models loading =====
     async function loadModels() {
       if (!WORKER_URL) {
@@ -456,7 +488,8 @@
         filtered.forEach(m => {
           const opt = document.createElement('option');
           opt.value = m.id;
-          opt.textContent = m.label || m.id;
+          const provBadge = m.provider ? `[${m.provider.toUpperCase()}] ` : '';
+          opt.textContent = provBadge + (m.label || m.id);
           select.appendChild(opt);
         });
       });
@@ -470,7 +503,9 @@
       else if (modelSelect2.options.length > 0) modelSelect2.selectedIndex = 0;
 
       drawCapabilitiesBadges(modelSelect1.value, capabilities1);
+      drawProviderBadge(modelSelect1.value, capabilities1);
       drawCapabilitiesBadges(modelSelect2.value, capabilities2);
+      drawProviderBadge(modelSelect2.value, capabilities2);
     }
 
     document.querySelectorAll('.filter-chip').forEach(chip => {
@@ -481,8 +516,8 @@
         applyFiltering();
       });
     });
-    modelSelect1.onchange = (e) => { setLS(LS.model1, e.target.value); drawCapabilitiesBadges(e.target.value, capabilities1); };
-    modelSelect2.onchange = (e) => { setLS(LS.model2, e.target.value); drawCapabilitiesBadges(e.target.value, capabilities2); };
+    modelSelect1.onchange = (e) => { setLS(LS.model1, e.target.value); drawCapabilitiesBadges(e.target.value, capabilities1); drawProviderBadge(e.target.value, capabilities1); };
+    modelSelect2.onchange = (e) => { setLS(LS.model2, e.target.value); drawCapabilitiesBadges(e.target.value, capabilities2); drawProviderBadge(e.target.value, capabilities2); };
     compareModeCheck.onchange = () => { model2Wrapper.classList.toggle('hidden', !compareModeCheck.checked); renderActiveChat(); };
 
     // ===== Render messages =====
