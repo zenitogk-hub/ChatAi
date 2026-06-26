@@ -110,9 +110,11 @@
       <span class="text-xs theme-text-sec font-bold block mb-1.5 uppercase tracking-wider px-1">Фильтр моделей:</span>
       <div class="grid grid-cols-2 gap-1 text-center text-xs">
         <button class="filter-chip bg-blue-600 text-white py-1.5 rounded-lg font-medium transition" data-filter="all">Все</button>
-        <button class="filter-chip theme-card py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-500/20 transition" data-filter="files">📁 Файлы</button>
-        <button class="filter-chip theme-card py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-500/20 transition" data-filter="speed">⚡ Быстрые</button>
-        <button class="filter-chip theme-card py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-500/20 transition" data-filter="power">🧠 Мощные</button>
+        <button class="filter-chip theme-card py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-500/20 transition" data-filter="free">🆓 Бесплатные</button>
+        <button class="filter-chip theme-card py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-500/20 transition" data-filter="gemini">🔷 GEMINI</button>
+        <button class="filter-chip theme-card py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-500/20 transition" data-filter="openai">🟢 OPENAI</button>
+        <button class="filter-chip theme-card py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-500/20 transition" data-filter="groq">🟠 GROQ</button>
+        <button class="filter-chip theme-card py-1.5 rounded-lg font-medium border theme-border hover:bg-gray-500/20 transition" data-filter="openrouter">🟣 OPENROUTER</button>
       </div>
     </div>
 
@@ -471,10 +473,26 @@
         });
       }
       const filtered = allModelsData.filter(m => {
+        // === Фильтр по провайдеру ===
+        if (currentFilter === 'gemini' && m.provider !== 'gemini') return false;
+        if (currentFilter === 'openai' && m.provider !== 'openai') return false;
+        if (currentFilter === 'groq' && m.provider !== 'groq') return false;
+        if (currentFilter === 'openrouter' && m.provider !== 'openrouter') return false;
+
+        // === Только бесплатные ===
+        if (currentFilter === 'free') {
+          // paidOnly = true — не бесплатная
+          if (m.paidOnly) return false;
+          // reason = paid_only / free_quota_zero / decommissioned / wrong_api — тоже не рабочая
+          if (m.reason === 'paid_only') return false;
+        }
+
+        // === Старые фильтры на всякий случай (если вернутся) ===
         const caps = evaluateCapabilities(m.id);
         if (currentFilter === 'files' && !caps.files) return false;
         if (currentFilter === 'speed' && !caps.speed) return false;
         if (currentFilter === 'power' && !caps.power) return false;
+
         if (isHideOld) {
           const parsed = getModelFamilyAndVersion(m.id);
           if (parsed && parsed.version < maxVersions[parsed.family]) return false;
